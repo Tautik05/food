@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - Fast Food Delivery</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/log.css' %}" />
+    <link rel="shortcut icon" href="{% static 'img/favicon.ico' %}" />
+    <link rel="shortcut icon" href="#" />
+  </head>
+  <body>
+    <div class="login-container">
+      <form class="registration" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <h2>Register</h2>
+        <hr />
+        {% if messages %}
+        <div class="alert alert-primary" role="alert">
+          {% for message in messages %} {{ message }} {% endfor %}
+        </div>
+        {% endif %}
+        <input type="hidden" value="admin" name="role" />
+        <div class="form-group">
+          <label for="name" class="form-label">Name</label>
+          <input
+            type="text"
+            class="form-control"
+            id="username"
+            name="user_name"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for="email" class="form-label">Email</label>
+          <input
+            type="email"
+            class="form-control"
+            name="email_id"
+            id="email"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for="password" class="form-label">Password</label>
+          <input
+            type="password"
+            name="password"
+            class="form-control"
+            id="password"
+            required
+          />
+        </div>
+        <button type="submit">Register</button>
+      </form>
+      <p>Already have an account? <a href="/admin-login/">Login</a></p>
+    </div>
+  </body>
+</html>

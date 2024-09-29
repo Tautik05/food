@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - Fast Food Delivery</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/log.css' %}" />
+    <link rel="shortcut icon" href="{% static 'img/favicon.ico' %}" />
+    <link rel="shortcut icon" href="#" />
+  </head>
+  <body>
+    <div class="login-container">
+      <form class="login" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <h2>Login</h2>
+        <hr />
+        {% if messages %}
+        <div class="alert alert-primary" role="alert">
+          {% for message in messages %} {{ message }} {% endfor %}
+        </div>
+        {% endif %}
+
+        <input type="hidden" value="deliverypartner" name="role" />
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input
+            type="email"
+            class="form-control"
+            name="email_id"
+            id="email_id"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input
+            type="password"
+            name="password"
+            class="form-control"
+            id="password"
+            required
+          />
+        </div>
+        <button type="submit">Login</button>
+      </form>
+      <p>Don't have an account? <a href="/delivery-register/">Register</a></p>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cart page</title>
+    {% load static %}
+    {% load custom_filters %}
+
+    <link rel="stylesheet" href="{% static 'css/cart.css' %}" />
+
+    <style>
+      .counter {
+        display: flex;
+        align-items: center;
+        margin-top: 20px;
+        }
+
+        .counter button {
+        padding: 5px 10px;
+        font-size: 16px;
+        font-weight: bold;
+        text-align: center;
+        color: white;
+        background-color: #080808;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        }
+
+        .counter .count {
+        margin: 0 10px;
+        font-size: 18px;
+        font-weight: bold;
+        }
+
+        .productprize {
+        font-size: 30px;
+        font-weight: bold;
+        color: green;
+        margin-top: 10px;
+        }
+
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <h2>Cart</h2>
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Image</th>
+            <th scope="col">Item</th>
+            <th scope="col">Price</th>
+            <th scope="col">Quantity</th>
+            <th scope="col">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in cart_items %}
+          <tr>
+            <th scope="row">{{ forloop.counter }}</th>
+            <td>
+              <img src="{{ item.shoe_image }}" style="height: 200px" alt="Shoe Image" />
+            </td>
+            <td>{{ item.shoe_name }}</td>
+            <td>{{ item.shoe_price }}</td>
+            <td>
+              <div class="counter" data-shoe-id="{{ item.shoe.id }}">
+                <button type="button" class="decrement">-</button>
+                <span class="count">{{ item.quantity }}</span>
+                <button type="button" class="increment">+</button>
+              </div>
+              <form method="post" action="{% url 'add_to_cart' item.shoe.id %}" class="update-form">
+                {% csrf_token %}
+                <input type="hidden" name="quantity" class="quantity-input" value="{{ item.quantity }}">
+              </form>
+            </td>
+            <td>{{ item.shoe_price|mul:item.quantity }}</td>
+          </tr>  
+          {% endfor %}   
+       </tbody>
+      </table>
+      <h3>Total: {{ cart.total_amount }}</h3>
+    </div>
+    <script>
+      document.querySelectorAll('.counter').forEach(counter => {
+        const decrementButton = counter.querySelector('.decrement');
+        const incrementButton = counter.querySelector('.increment');
+        const countElement = counter.querySelector('.count');
+        const quantityInput = counter.closest('td').querySelector('.quantity-input');
+        const updateForm = counter.closest('td').querySelector('.update-form');
+        const totalPriceElement = counter.closest('tr').querySelector('.total-price');
+        const shoePrice = parseFloat(counter.closest('tr').querySelector('td:nth-child(4)').textContent);
+  
+        let count = parseInt(countElement.textContent);
+  
+        decrementButton.addEventListener("click", () => {
+          if (count > 1) {
+            count--;
+            countElement.textContent = count;
+            quantityInput.value = -1; // Decrease quantity by 1
+            updateForm.submit();
+          }
+        });
+  
+        incrementButton.addEventListener("click", () => {
+          count++;
+          countElement.textContent = count;
+          quantityInput.value = 1; // Increase quantity by 1
+          updateForm.submit();
+        });
+      });
+    </script>
+  </body>
+</html>

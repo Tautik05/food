@@ -1,0 +1,88 @@
+<div id="location-modal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2>Add Your Location</h2>
+    <p>
+      Please allow access to your location to automatically fill in your
+      address.
+    </p>
+    <form id="location-form" method="post" enctype="multipart/form-data">
+      {% csrf_token %} {% if messages %}
+      <div class="alert alert-primary" role="alert">
+        {% for message in messages %} {{ message }} {% endfor %}
+      </div>
+      {% endif %}
+
+      <input type="hidden" id="latitude" name="latitude" required />
+      <input type="hidden" id="longitude" name="longitude" required />
+      <label for="address">Address:</label>
+      <input type="text" id="address" name="address" required />
+      <button type="submit">Submit</button>
+    </form>
+  </div>
+</div>
+
+<!-- CSS -->
+<style>
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+  }
+
+  .modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 500px;
+    border-radius: 5px;
+  }
+
+  .close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .close:hover,
+  .close:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  #location-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  #location-form input[type="text"] {
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+  }
+
+  #location-form button {
+    background-color: #ff6b00;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+
+  #location-form button:hover {
+    background-color: #e55a00;
+  }
+</style>

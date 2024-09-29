@@ -1,0 +1,101 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f5f5f5;
+}
+
+.container {
+  width: 80%;
+  margin: 20px auto;
+  text-align: center;
+}
+
+h1 {
+  margin-bottom: 20px;
+  font-size: 24px;
+  color: #333;
+}
+
+.food-grid {
+  display: flex;
+  justify-content: space-between;
+}
+
+.food-card {
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  width: 30%;
+  transition: 0.3s;
+}
+
+.food-card img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+}
+
+.food-card .info {
+  padding: 10px;
+}
+
+.food-card h2 {
+  font-size: 18px;
+  margin-bottom: 5px;
+}
+
+.food-card p {
+  font-size: 14px;
+  color: #666;
+}
+
+.food-card .price {
+  font-weight: bold;
+  margin: 10px 0;
+}
+
+.food-card .meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.meta .offer {
+  color: #007bff;
+  font-weight: bold;
+}
+
+.meta .rating {
+  background-color: #4caf50;
+  color: #fff;
+  padding: 2px 5px;
+  border-radius: 5px;
+}
+
+.meta .time {
+  color: #666;
+}
+
+.promoted::before {
+  content: "Promoted";
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background-color: rgba(255, 255, 255, 0.7);
+  color: #333;
+  padding: 5px;
+  font-size: 12px;
+  border-radius: 5px;
+  font-weight: bold;
+}
+
+.food-card:hover {
+  transform: scale(1.05);
+}

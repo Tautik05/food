@@ -1,0 +1,133 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Yum</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+    <link rel="shortcut icon" href="{% static 'img/favicon.ico' %}" />
+    <link rel="shortcut icon" href="#" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+    <script>
+      let slideIndex = 0;
+      
+      function moveSlide(n) {
+        const slides = document.querySelector(".slider-images");
+        const totalSlides = slides.children.length;
+        slideIndex = (slideIndex + n + totalSlides) % totalSlides;
+        const newTransform = `translateX(-${(slideIndex * 100) / totalSlides}%)`;
+        slides.style.transform = newTransform;
+      }
+      
+      // Auto slide every 5 seconds
+      setInterval(() => {
+        moveSlide(1);
+      }, 5000);  
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  </head>
+  <body>
+    <nav>
+      <div class="navtop">
+        <div class="navitem">
+          <img src="{% static 'img/logo.jpg' %}" alt="Logo" />
+        </div>
+        <form method="GET" action="{% url 'search_restaurant' %}">
+          <div class="navitem">
+            <div class="search">
+              <input
+                type="text"
+                id="search"
+                name="search_query"
+                placeholder="Search..."
+                class="searchInput"
+              />
+              <button type="submit" class="btn btn-submit">search</button>
+            </div>
+         </div>
+        </form>
+        {% csrf_token %}
+        <div class="navitem">
+          <div>
+            <select id="location-dropdown" name="location-dropdown">
+              {% if selected_location %}
+                  <option value="{{ selected_location.address }}"
+                          data-lat="{{ selected_location.latitude }}"
+                          data-lon="{{ selected_location.longitude }}"
+                          selected>
+                      {{ selected_location.address }}
+                  </option>
+              {% else %}
+                  <option value="">Select a location</option>
+              {% endif %}
+              {% for loc in locations %}
+                  <option value="{{ loc.location }}"
+                          data-lat="{{ loc.latitude }}"
+                          data-lon="{{ loc.longitude }}"
+                          {% if selected_location and loc.location == selected_location.address %}selected{% endif %}>
+                      {{ loc.location }}
+                  </option>
+              {% endfor %}
+           </select>         
+            <button class="location-btn" id="add-location-btn">
+              <i class="fa fa-plus"></i> Add Location
+            </button>
+          </div>
+        </div>
+        <div class="navbaritems">
+          <div class="navitem">
+            {% if request.user.is_authenticated %}
+            <a href="/logout" class="btn btn-success" type="submit">Logout</a>
+            {% else %}
+            <a href="customer-login/" class="btn btn-success" type="submit"
+              >Login</a
+            >
+            {% endif %}
+          </div>
+          <div class="navitem">
+            <a href="cart/" class="btn">Cart</a>
+          </div>
+        </div>
+      </div>
+    </nav>
+    {% include 'locationmodal.html' %}
+<div class="slider-container">
+  <div class="slider-images">
+    <img src="{% static 'img/mutton-biriyani-recipe.jpeg' %}" alt="Food 1" />
+    <img src="{% static 'img/burger.jpg' %}" alt="Food 2" />
+    <img src="{% static 'img/cake.jpg' %}" alt="Food 3" />
+  </div>
+  <a class="prev" onclick="moveSlide(-1)">&#10094;</a>
+  <a class="next" onclick="moveSlide(1)">&#10095;</a>
+</div>
+<div class="food-category">
+  <h2>What's on your mind?</h2>
+  <div class="food-items-wrapper">
+    <button class="nav-button prev">&#8592;</button>
+    <div class="food-items">
+      {% for food in foodcategory %}
+      <div class="food-item">
+        <img src="{{food.category_image.url}}" alt="can't load image" />
+        <p>{{ food.food_type }}</p>
+      </div>
+      {% endfor %}
+    </div>
+    <button class="nav-button next">&#8594;</button>
+  </div>
+</div>
+<div id="restaurant-recommendations">
+  <!-- Recommendations will be inserted here by JavaScript -->
+</div>
+<script>
+  var userLocationJSON = "{{ selected_location_json|escapejs }}";
+  var allRestaurantsJSON = "{{ restaurants_json|escapejs }}";
+</script>
+<!-- Include your app.js file after this script tag -->
+<script src="{% static 'js/app.js' %}"></script>
+</body>
+</html>

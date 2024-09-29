@@ -1,0 +1,57 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RestaurantSignUp</title>
+    <link rel="stylesheet" href="{% static 'css/signup.css' %}" />
+    <link rel="shortcut icon" href="{% static 'img/favicon.ico' %}" />
+    <link rel="shortcut icon" href="#" />
+    <script type="text/javascript" src="{% static 'js/script.js' %}"></script>
+  </head>
+  <body>
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <h3>Register Your Restaurant</h3>
+      <hr />
+      {% if messages %}
+      <div class="alert alert-primary" role="alert">
+        {% for message in messages %} {{ message }} {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Restaurant Details -->
+      <div>
+        <label for="restaurant_name">Restaurant Name:</label>
+        <input type="text" name="restaurant_name" required />
+      </div>
+
+      <div>
+        <label for="restaurant_location">Restaurant Location:</label>
+        <input type="text" name="restaurant_location" required />
+      </div>
+
+      <div>
+        <label for="latitude">Latitude:</label>
+        <input type="number" name="latitude" step="0.0000001" required />
+      </div>
+
+      <div>
+        <label for="longitude">Longitude:</label>
+        <input type="number" name="longitude" step="0.0000001" required />
+      </div>
+
+      <div>
+        <label for="restaurant_image">Restaurant Image:</label>
+        <input type="file" name="restaurant_image" required />
+      </div>
+
+      <button type="submit">Register</button>
+    </form>
+    <p>
+      Already have an account? <a href="{% url 'owner_login_page' %}">Login</a>
+    </p>
+  </body>
+</html>
