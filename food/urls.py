@@ -35,14 +35,7 @@ urlpatterns = [
 
     path('inventory/update-quantity-available/<int:record_id>/<str:action>/', update_quantity_available, name='update_quantity_available'),
 
-
-    # URL for updating quantity available    
-    # path('inventory/update-quantity-available/<int:record_id>/<str:action>/', update_quantity_available, name='update_quantity_available'),
-    
-    # path('inventory/update-quantity-sold/<int:record_id>/<str:action>/', update_quantity_sold, name='update_quantity_sold'),
-
     path('search/', search_restaurant, name='search_restaurant'),
-
 
     path('add_food/', add_food_item, name='add_food_item'),
     # path('restaurant/location/',restaurant_location, name='restaurant_location'),
