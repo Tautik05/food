@@ -124,6 +124,9 @@ def restaurant_home(request,restaurant_id):
     if request.user.is_authenticated and request.user.role == 'customer':
         restaurant=Restaurant.objects.get(id=restaurant_id)
 
+        selected_location = request.session.get('customer_selected_location')
+
+
 
         inventory_records = FoodInventoryRecord.objects.filter(inventory=restaurant.inventory).select_related('food_items')
 
@@ -131,8 +134,9 @@ def restaurant_home(request,restaurant_id):
 
         context = {
             'restaurant':restaurant,
-            'inventory_records': inventory_records,  # Pass the inventory records to the template
-
+            'inventory_records': inventory_records,
+            'selected_location': selected_location,  # Pass selected location to the template
+            # Pass the inventory records to the template
         }
 
     return render(request,'restaurant-home.html',context)
@@ -227,32 +231,6 @@ def add_food_item(request):
 
 
 
-# def update_quantity_available(request, record_id, action):
-#     try:
-#         record = FoodInventoryRecord.objects.get(id=record_id)
-#         if action == 'increase':
-#             record.quantity_available += 1
-#         elif action == 'decrease' and record.quantity_available > 0:
-#             record.quantity_available -= 1
-#         record.save()
-#         return JsonResponse({'success': True, 'new_quantity_available': record.quantity_available})
-#     except FoodInventoryRecord.DoesNotExist:
-#         return JsonResponse({'success': False, 'error': 'Record not found'}, status=404)
-
-
-# def update_quantity_sold(request, record_id, action):
-#     try:
-#         record = FoodInventoryRecord.objects.get(id=record_id)
-#         if action == 'increase':
-#             record.quantity_sold += 1
-#         elif action == 'decrease' and record.quantity_sold > 0:
-#             record.quantity_sold -= 1
-#         record.save()
-#         return JsonResponse({'success': True, 'new_quantity_sold': record.quantity_sold})
-#     except FoodInventoryRecord.DoesNotExist:
-#         return JsonResponse({'success': False, 'error': 'Record not found'}, status=404)
-
-
 
 def update_quantity_available(request, record_id, action):
     try:
@@ -269,6 +247,7 @@ def update_quantity_available(request, record_id, action):
             record.save()
 
         return JsonResponse({'success': True, 'new_quantity_available': record.quantity_available})
+    
     except FoodInventoryRecord.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Record not found'}, status=404)
 
@@ -277,12 +256,11 @@ def update_quantity_available(request, record_id, action):
 
 
 
+def delete_food(request, id):
+   queryset = FoodInventoryRecord.objects.get(id = id)
+   queryset.delete()
+   return redirect('manage_inventory')
 
-
-
-
-
-# def add_to_cart(request,restaurant_id):
     
 
 

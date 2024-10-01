@@ -31,6 +31,8 @@ urlpatterns = [
 
     path('inventory/',manage_inventory,name='manage_inventory'),
 
+    path('delete-food/<int:id>/',delete_food,name='delete_food'),
+
     path('inventory/update-quantity-available/<int:record_id>/<str:action>/', update_quantity_available, name='update_quantity_available'),
 
 

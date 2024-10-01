@@ -52,7 +52,7 @@
             >
             {% endif %}
           </div>
-          <!-- Button to open modal -->
+
           <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addFoodModal">
             Add New Food Item
           </button>
@@ -88,6 +88,10 @@
           <td>
             <button class="quantity-btn" data-id="{{ record.id }}" data-action="decrease-sold">-</button>
             <button class="quantity-btn" data-id="{{ record.id }}" data-action="increase-sold">+</button>
+          </td>
+          <td>              
+            <a href="delete-food/{{record.id}}/" class="btn btn-danger"
+            >Delete</a>
           </td>
         </tr>
           {% endfor %}

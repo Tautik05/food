@@ -1,5 +1,5 @@
 {% load static %}
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -12,23 +12,8 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
     />
-    <script>
-      let slideIndex = 0;
-      
-      function moveSlide(n) {
-        const slides = document.querySelector(".slider-images");
-        const totalSlides = slides.children.length;
-        slideIndex = (slideIndex + n + totalSlides) % totalSlides;
-        const newTransform = `translateX(-${(slideIndex * 100) / totalSlides}%)`;
-        slides.style.transform = newTransform;
-      }
-      
-      // Auto slide every 5 seconds
-      setInterval(() => {
-        moveSlide(1);
-      }, 5000);  
-    </script>
 
+    <script src="{% static 'js/home.js' %}"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   </head>
   <body>
@@ -95,7 +80,13 @@
         </div>
       </div>
     </nav>
-    {% include 'locationmodal.html' %}
+    {% include 'locationmodal.html' %} -->
+
+
+    {% include 'base.html' %}
+    <script src="{% static 'js/home.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+
 <div class="slider-container">
   <div class="slider-images">
     <img src="{% static 'img/mutton-biriyani-recipe.jpeg' %}" alt="Food 1" />
@@ -127,7 +118,6 @@
   var userLocationJSON = "{{ selected_location_json|escapejs }}";
   var allRestaurantsJSON = "{{ restaurants_json|escapejs }}";
 </script>
-<!-- Include your app.js file after this script tag -->
 <script src="{% static 'js/app.js' %}"></script>
 </body>
 </html>
