@@ -32,7 +32,11 @@ DEBUG = True
 
 
 
-ALLOWED_HOSTS = ['food.onrender.com']
+# ALLOWED_HOSTS = ['food.onrender.com']
+
+
+ALLOWED_HOSTS = ['food.onrender.com', 'www.food.onrender.com', 'food-7ie2.onrender.com']
+
 
 # Application definition
 
