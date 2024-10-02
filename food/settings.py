@@ -95,16 +95,40 @@ WSGI_APPLICATION = 'food.wsgi.application'
 
 
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'postgres',       # Database name
+#         'USER': 'postgres.ispriplgvqmhodhundda',       # Database username
+#         'PASSWORD': 'e4e5Nf3Nc6@',        # Database password
+#         'HOST': 'aws-0-ap-southeast-1.pooler.supabase.com',            # Supabase PostgreSQL host (like db.xxxxx.supabase.co)
+#         'PORT': '6543',                     # PostgreSQL port (usually 5432)
+#     }
+# }
+
+
+
+import os
+
+from dotenv import load_dotenv
+
+load_dotenv()  # Load environment variables from .env file
+#last two lines newly added
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',       # Database name
-        'USER': 'postgres.ispriplgvqmhodhundda',       # Database username
-        'PASSWORD': 'e4e5Nf3Nc6@',        # Database password
-        'HOST': 'aws-0-ap-southeast-1.pooler.supabase.com',            # Supabase PostgreSQL host (like db.xxxxx.supabase.co)
-        'PORT': '6543',                     # PostgreSQL port (usually 5432)
+        'NAME': os.getenv('DATABASE_NAME'),  # Set in Render
+        'USER': os.getenv('DATABASE_USER'),  # Set in Render
+        'PASSWORD': os.getenv('DATABASE_PASSWORD'),  # Set in Render
+        'HOST': os.getenv('DATABASE_HOST'),  # Set in Render
+        'PORT': os.getenv('DATABASE_PORT'),  # Set in Render
     }
 }
+
+
+
+
 
 
 

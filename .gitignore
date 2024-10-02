@@ -3,3 +3,5 @@ env/
 
 # Ignore the database file
 *.sqlite3
+
+.env
