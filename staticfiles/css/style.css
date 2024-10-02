@@ -19,11 +19,11 @@ body {
   font-family: Arial, sans-serif;
 }
 
-/* Style the navigation bar */
 nav {
   background-color: #fff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   padding: 10px;
+  display: flex;
 }
 .navbaritems {
   display: flex;
@@ -39,7 +39,6 @@ nav {
   margin-right: 10px;
 }
 
-/* Style the logo image */
 .navitem img {
   height: 40px;
 }
@@ -80,7 +79,6 @@ nav {
   transition: background-color 0.2s ease-in-out;
 }
 
-/* Style the search input  */
 .searchInput {
   width: 317px;
   padding: 5px;
@@ -88,7 +86,6 @@ nav {
   border-radius: 28px;
 }
 
-/* Style the login/logout buttons */
 .btn {
   display: inline-block;
   padding: 5px 10px;
@@ -98,12 +95,10 @@ nav {
   border-radius: 5px;
 }
 
-/* Style the cart button */
 .btn.btn-success {
   background-color: #f44336;
 }
 
-/* Add some spacing between elements */
 .navitem:not(:last-child) {
   margin-right: 10px;
 }
