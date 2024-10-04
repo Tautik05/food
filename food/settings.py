@@ -43,7 +43,8 @@ ALLOWED_HOSTS = [
     'www.food.onrender.com', 
     'food-7ie2.onrender.com',
     'localhost', 
-    '127.0.0.1'
+    '127.0.0.1',
+    'food-7ie2.onrender.com'
 ]
 
 
@@ -62,6 +63,7 @@ EXTERNAL_APPS = [ 'home',
                  'accounts'
                  ]
 INSTALLED_APPS += EXTERNAL_APPS
+
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
