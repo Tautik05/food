@@ -133,6 +133,11 @@ from dotenv import load_dotenv
 load_dotenv()  # Load environment variables from .env file
 #last two lines newly added
 
+
+# Get the PORT environment variable with a default value of '8000'
+PORT = os.getenv("PORT", "8000")
+
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
