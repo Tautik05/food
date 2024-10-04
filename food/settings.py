@@ -38,14 +38,16 @@ DEBUG = True
 # ALLOWED_HOSTS = ['food.onrender.com', 'www.food.onrender.com', 'food-7ie2.onrender.com']
 
 
-ALLOWED_HOSTS = [
-    'food.onrender.com', 
-    'www.food.onrender.com', 
-    'food-7ie2.onrender.com',
-    'localhost', 
-    '127.0.0.1',
-    'food-7ie2.onrender.com'
-]
+# ALLOWED_HOSTS = [
+#     'food.onrender.com', 
+#     'www.food.onrender.com', 
+#     'food-7ie2.onrender.com',
+#     'localhost', 
+#     '127.0.0.1',
+# ]
+
+
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 
 
 
