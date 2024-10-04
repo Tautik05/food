@@ -47,6 +47,15 @@ DEBUG = True
 # ]
 
 
+
+import os
+
+from dotenv import load_dotenv
+
+load_dotenv()  # Load environment variables from .env file
+#last two lines newly added
+
+
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 
 
@@ -150,31 +159,6 @@ DATABASES = {
         'PORT': os.getenv('DATABASE_PORT'),  # Set in Render
     }
 }
-
-
-
-
-
-
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'verceldb',             # The database name
-#         'USER': 'default',              # The username
-#         'PASSWORD': 'Z8pi6gImHhbR',     # The password
-#         'HOST': 'ep-shrill-sea-a4qycyek.us-east-1.aws.neon.tech', # The host URL
-#         'PORT': '5432',                 # The port number
-#         'OPTIONS': {
-#             'sslmode': 'require',       # Required for secure connection
-#         },
-#     }
-# }
-
-
-
-
-
 
 
 
