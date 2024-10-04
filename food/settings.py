@@ -216,6 +216,7 @@ USE_TZ = True
 
 import os
 
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # STATIC_URL = 'static/'
 STATIC_URL = '/static/'
@@ -232,7 +233,6 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 #Newly added
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
