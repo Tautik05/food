@@ -56,8 +56,7 @@ load_dotenv()  # Load environment variables from .env file
 #last two lines newly added
 
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
-
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 
 # Application definition
@@ -70,6 +69,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 ]
+
 EXTERNAL_APPS = [ 'home',
                  'accounts'
                  ]
