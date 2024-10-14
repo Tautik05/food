@@ -1,0 +1,26 @@
+{% extends 'base.html' %} {% load static %} {% block content %}
+
+<link rel="shortcut icon" href="#" />
+<link rel="stylesheet" href="{% static 'css/category.css' %}" />
+
+{% for item in restaurant_foods %}
+<div class="restaurant-section">
+  <h2>{{ item.restaurant.restaurant_name }}</h2>
+
+  <div class="food-items">
+    {% for food in item.foods %}
+    <div class="food-item">
+      <img src="{{ food.food_image.url }}" alt="{{ food.food_name }}" />
+      <h3>{{ food.food_name }}</h3>
+      <p>{{ food.food_description }}</p>
+      <p>Price: ${{ food.food_price }}</p>
+      <a href="{% url 'add_to_cart' food.id %}" class="add-to-cart-btn"
+        >Add to Cart</a
+      >
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% empty %}
+<p>No restaurants found with {{ category.food_type }} in their menu.</p>
+{% endfor %} {% endblock %}

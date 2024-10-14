@@ -74,9 +74,27 @@
             {% endif %}
           </div>
           <div class="navitem">
-            <a href="cart/" class="btn">Cart</a>
+            <a href="{% url 'view_cart' %}" class="btn">Cart</a>
           </div>
         </div>
       </div>
     </nav>
     {% include 'locationmodal.html' %}
+    {% if messages %}
+    <div class="messages">
+        <ul>
+            {% for message in messages %}
+                <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <script>
+        // Automatically hide messages after a few seconds
+        setTimeout(function() {
+            const messages = document.querySelector('.messages');
+            if (messages) {
+                messages.style.display = 'none';
+            }
+        }, 3000);
+    </script>
+{% endif %}

@@ -18,12 +18,14 @@
     <button class="nav-button prev">&#8592;</button>
     <div class="food-items">
       {% for food in foodcategory %}
-      <div class="food-item">
-        <img src="{{food.category_image.url}}" alt="can't load image" />
-        <p>{{ food.food_type }}</p>
-      </div>
+      <a href="{% url 'category_restaurants' food.id %}" class="food-item-link">
+          <div class="food-item">
+              <img src="{{food.category_image.url}}" alt="can't load image" />
+              <p>{{ food.food_type }}</p>
+          </div>
+      </a>
       {% endfor %}
-    </div>
+   </div>
     <button class="nav-button next">&#8594;</button>
   </div>
 </div>

@@ -1,0 +1,35 @@
+.restaurant-section {
+  margin-bottom: 30px;
+  border: 1px solid #ddd;
+  padding: 20px;
+  border-radius: 5px;
+}
+
+.food-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.food-item {
+  border: 1px solid #eee;
+  padding: 10px;
+  border-radius: 5px;
+  width: 200px;
+}
+
+.food-item img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 5px;
+}
+
+.add-to-cart-btn {
+  display: inline-block;
+  padding: 5px 10px;
+  background-color: #007bff;
+  color: white;
+  text-decoration: none;
+  border-radius: 3px;
+}

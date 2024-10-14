@@ -1,8 +1,9 @@
 from django.db import models
-
-# Create your models here.
-
+from django.conf import settings
+from django.db import models
 from accounts.models import *
+
+
 
 class FoodCategory(models.Model):
     food_type=models.CharField(max_length=100)
@@ -67,6 +68,45 @@ class FoodInventoryRecord(models.Model):
     def __str__(self):
         return f"{self.food_item.food_name} - Available: {self.quantity_available}, Sold: {self.quantity_sold}"
       
+
+
+
+class Cart(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='cart')
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name='cart')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Cart - {self.user.username} - {self.restaurant.name}"
+
+    @property
+    def total_price(self):
+        total = sum([item.total_price for item in self.cart_items.all()])
+        return total
+
+
+class CartItem(models.Model):
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
+    food_item = models.ForeignKey(Food, on_delete=models.CASCADE, related_name='cart_items')
+    quantity = models.PositiveIntegerField(default=1)
+    price = models.IntegerField()  # Store price for each food item
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.food_item.name} - {self.quantity}"
+
+    @property
+    def total_price(self):
+        return self.quantity * self.price
+
+
+
+
+
+
+
 
 
 

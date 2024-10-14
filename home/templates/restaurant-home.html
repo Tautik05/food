@@ -21,7 +21,7 @@
                         <p>{{ record.food_items.food_description }}</p>
                         <p class="price">${{ record.food_items.food_price }}</p>
                         <p class="quantity-available">Available: {{ record.quantity_available }}</p>
-                        <a href="">Add to Cart!</a>
+                        <a href="{% url 'add_to_cart' record.food_items.id %}" class="add-to-cart-btn">Add to Cart!</a>
 
                         <!-- <button class="add-to-cart-btn">Add to Cart</button> -->
                     </div>

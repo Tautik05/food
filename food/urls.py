@@ -27,15 +27,33 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 urlpatterns = [
     path('', home, name='home'),
 
+    path('category/<int:category_id>/', category_restaurants, name='category_restaurants'),
+
     path('restaurant/<int:restaurant_id>',restaurant_home,name='restaurant_home'),
 
     path('inventory/',manage_inventory,name='manage_inventory'),
 
-    path('delete-food/<int:id>/',delete_food,name='delete_food'),
+    # path('delete-food/<int:id>/',delete_food,name='delete_food'),
 
     path('inventory/update-quantity-available/<int:record_id>/<str:action>/', update_quantity_available, name='update_quantity_available'),
 
     path('search/', search_restaurant, name='search_restaurant'),
+
+    path('cart/', view_cart, name='view_cart'),
+
+    path('cart/add/<int:food_id>/', add_to_cart, name='add_to_cart'),
+
+
+    # path('cart/add/<int:food_id>/', add_to_cart, name='add_to_cart'),
+
+    path('cart/update/<int:cart_item_id>/', update_cart_item, name='update_cart_item'),
+
+    path('cart/remove/<int:cart_item_id>/', remove_cart_item, name='remove_cart_item'),
+
+    path('cart/clear/', clear_cart, name='clear_cart'),
+
+
+    path('checkout/', checkout, name='checkout'),
 
     path('add_food/', add_food_item, name='add_food_item'),
     # path('restaurant/location/',restaurant_location, name='restaurant_location'),

@@ -118,6 +118,53 @@ def location(request):
 
 
 
+# def category_restaurants(request, food_type):
+#     # Get the food category based on the selected type
+#     category = get_object_or_404(FoodCategory, food_type=food_type)
+
+#     selected_location = request.session.get('customer_selected_location')
+
+
+#     # Get all food items for the selected food category
+#     food_items = Food.objects.filter(food_category=category)
+
+#     # Get distinct restaurants offering food items from this category
+#     restaurants = Restaurant.objects.filter(food_products__in=food_items).distinct()
+
+#     context = {
+#         'restaurants': restaurants,
+#         'food_items': food_items,
+#         'food_type': food_type,
+#         'selected_location': selected_location,  # Pass selected location to the template
+
+#     }
+#     return render(request, 'food-category.html', context)
+
+
+def category_restaurants(request, category_id):
+    category = get_object_or_404(FoodCategory, id=category_id)
+    
+    # Get all restaurants that have food items in this category
+    restaurants = Restaurant.objects.filter(food_products__food_category=category).distinct()
+    
+    # For each restaurant, get the food items in this category
+    restaurant_foods = []
+    for restaurant in restaurants:
+        foods = Food.objects.filter(restaurant=restaurant, food_category=category)
+        restaurant_foods.append({
+            'restaurant': restaurant,
+            'foods': foods
+        })
+    
+    context = {
+        'category': category,
+        'restaurant_foods': restaurant_foods,
+    }
+    
+    return render(request, 'food-category.html', context)
+
+
+
 
 def restaurant_home(request,restaurant_id):
 
@@ -140,6 +187,156 @@ def restaurant_home(request,restaurant_id):
         }
 
     return render(request,'restaurant-home.html',context)
+
+
+
+
+
+
+@login_required
+def add_to_cart(request, food_id):
+    if request.user.is_authenticated:
+        food_item = get_object_or_404(Food, id=food_id)
+        
+        # Debug print
+        print(f"Adding food item: {food_item.food_name}, Price: {food_item.food_price}")
+
+        existing_cart = Cart.objects.filter(user=request.user).first()
+
+        if existing_cart and existing_cart.restaurant != food_item.restaurant:
+            messages.error(request, "You can only add food items from one restaurant at a time. Please clear your cart first.")
+            return redirect('restaurant_home', restaurant_id=food_item.restaurant.id)
+
+        cart, created = Cart.objects.get_or_create(user=request.user, restaurant=food_item.restaurant)
+
+        cart_item, item_created = CartItem.objects.get_or_create(
+            cart=cart,
+            food_item=food_item,
+            defaults={'price': food_item.food_price}  # Set the price when creating
+        )
+
+        if not item_created:
+            cart_item.quantity += 1
+        
+        # Ensure price is always set/updated
+        cart_item.price = food_item.food_price
+        
+        # Debug print
+        print(f"Cart item price set to: {cart_item.price}")
+
+        cart_item.save()
+
+        messages.success(request, f"{food_item.food_name} added to your cart!")
+        return redirect('view_cart')
+    else:
+        messages.error(request, "You need to be logged in to add items to your cart.")
+        return redirect('customer_login_page')
+
+
+
+# View Cart
+@login_required
+def view_cart(request):
+    # Get the cart for the current user
+    cart = Cart.objects.filter(user=request.user).first()
+    
+    # Get all items in the cart using the updated related_name 'items'
+    cart_items = cart.items.all() if cart else []
+    
+    # Calculate the total price of all items in the cart
+    cart_total = sum(item.total_price for item in cart_items)
+    
+    # Pass the cart items and total price to the template
+    context = {
+        'cart_items': cart_items,
+        'cart_total': cart_total,
+    }
+    
+    return render(request, 'cart.html', context)
+
+
+
+# Update Cart Item Quantity
+# @login_required
+# def update_cart_item(request, cart_item_id):
+#     cart_item = get_object_or_404(CartItem, id=cart_item_id, cart__user=request.user)
+
+#     if request.method == 'POST':
+#         quantity = int(request.POST.get('quantity'))
+#         if quantity > 0:
+#             cart_item.quantity = quantity
+#             cart_item.save()
+#         else:
+#             cart_item.delete()  # Remove item if quantity is zero
+
+#     return redirect('view_cart')
+
+
+
+from django.views.decorators.http import require_POST
+
+@require_POST
+def update_cart_item(request, cart_item_id):
+    cart_item = get_object_or_404(CartItem, id=cart_item_id, cart__user=request.user)
+    data = json.loads(request.body)
+    action = data.get('action')
+
+    if action == 'increase':
+        cart_item.quantity += 1
+    elif action == 'decrease':
+        cart_item.quantity = max(0, cart_item.quantity - 1)
+    elif action == 'remove':
+        cart_item.quantity = 0
+
+    if cart_item.quantity == 0:
+        cart_item.delete()
+    else:
+        cart_item.save()
+
+    # Recalculate cart total
+    cart = cart_item.cart
+    cart_total = sum(item.total_price for item in cart.items.all())
+
+    return JsonResponse({
+        'new_quantity': cart_item.quantity,
+        'new_total': cart_item.total_price,
+        'cart_total': cart_total,
+    })
+
+
+
+
+
+
+
+
+# Remove Cart Item
+@login_required
+def remove_cart_item(request, cart_item_id):
+    cart_item = get_object_or_404(CartItem, id=cart_item_id, cart__user=request.user)
+    cart_item.delete()  # Remove the item from the cart
+    return redirect('view_cart')
+
+
+@login_required
+def clear_cart(request):
+    cart = Cart.objects.filter(user=request.user).first()
+    if cart:
+        cart.delete()  # Clear the cart by deleting the cart object
+        messages.success(request, "Your cart has been cleared.")
+    return redirect('restaurant_home')
+
+
+# Checkout View (Placeholder for now)
+@login_required
+def checkout(request):
+    # You can later extend this to handle payments, order confirmation, etc.
+    return redirect('view_cart')
+
+
+
+
+
 
 
 
@@ -256,10 +453,15 @@ def update_quantity_available(request, record_id, action):
 
 
 
-def delete_food(request, id):
-   queryset = FoodInventoryRecord.objects.get(id = id)
-   queryset.delete()
-   return redirect('manage_inventory')
+
+
+
+
+
+# def delete_food(request, id):
+#    queryset = FoodInventoryRecord.objects.get(id = id)
+#    queryset.delete()
+#    return redirect('manage_inventory')
 
     
 
