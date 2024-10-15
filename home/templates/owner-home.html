@@ -67,8 +67,7 @@
               <th>Food Name</th>
               <th>Quantity Available</th>
               <th>Quantity Sold</th>
-              <th>Actions (Available)</th>
-              <th>Actions (Sold)</th>
+              <th>Quantity left</th>
           </tr>
       </thead>
       <tbody>
@@ -79,19 +78,11 @@
           <td id="quantity-available-{{ record.id }}">{{ record.quantity_available }}</td>
           <!-- Quantity Sold -->
           <td id="quantity-sold-{{ record.id }}">{{ record.quantity_sold }}</td>
+          <td id="quantity-left-{{ record.id }}">{{ record.quantity_left }}</td>
           <!-- Actions for Available Quantity -->
-          <td>
-            <button class="quantity-btn" data-id="{{ record.id }}" data-action="decrease-available">-</button>
-            <button class="quantity-btn" data-id="{{ record.id }}" data-action="increase-available">+</button>
-          </td>
-          <!-- Actions for Sold Quantity -->
-          <td>
-            <button class="quantity-btn" data-id="{{ record.id }}" data-action="decrease-sold">-</button>
-            <button class="quantity-btn" data-id="{{ record.id }}" data-action="increase-sold">+</button>
-          </td>
+
           <td>              
-            <a href="delete-food/{{record.id}}/" class="btn btn-danger"
-            >Delete</a>
+            <a href="{% url 'delete_food' record.id %}" class="btn btn-danger">Delete</a>
           </td>
         </tr>
           {% endfor %}
@@ -169,7 +160,7 @@
         });
      });
     </script>
-    <script>
+    <!-- <script>
       document.querySelectorAll('.quantity-btn').forEach(button => {
           button.addEventListener('click', async (event) => {
               const recordId = event.target.getAttribute('data-id');
@@ -210,6 +201,6 @@
               }
           });
       });
-    </script>
+    </script> -->
  </body>
 </html>

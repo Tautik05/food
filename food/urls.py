@@ -33,16 +33,15 @@ urlpatterns = [
 
     path('inventory/',manage_inventory,name='manage_inventory'),
 
-    # path('delete-food/<int:id>/',delete_food,name='delete_food'),
+    path('delete-food/<int:food_id>/', delete_food, name='delete_food'),
 
-    path('inventory/update-quantity-available/<int:record_id>/<str:action>/', update_quantity_available, name='update_quantity_available'),
+    path('inventory/update-quantity-available/<int:record_id>/', update_quantity_available, name='update_quantity_available'),
 
     path('search/', search_restaurant, name='search_restaurant'),
 
     path('cart/', view_cart, name='view_cart'),
 
     path('cart/add/<int:food_id>/', add_to_cart, name='add_to_cart'),
-
 
     # path('cart/add/<int:food_id>/', add_to_cart, name='add_to_cart'),
 
@@ -54,6 +53,8 @@ urlpatterns = [
 
 
     path('checkout/', checkout, name='checkout'),
+
+    path('order-confirmation/<int:order_id>/', order_confirmation, name='order_confirmation'),
 
     path('add_food/', add_food_item, name='add_food_item'),
     # path('restaurant/location/',restaurant_location, name='restaurant_location'),

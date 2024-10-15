@@ -1,12 +1,10 @@
-{% extends 'base.html' %} {% load static %} {% block content %}
-
+{% load static %} {% include 'base.html' %}
 <link rel="shortcut icon" href="#" />
 <link rel="stylesheet" href="{% static 'css/category.css' %}" />
 
-{% for item in restaurant_foods %}
+{% if restaurant_foods %} {% for item in restaurant_foods %}
 <div class="restaurant-section">
   <h2>{{ item.restaurant.restaurant_name }}</h2>
-
   <div class="food-items">
     {% for food in item.foods %}
     <div class="food-item">
@@ -21,6 +19,8 @@
     {% endfor %}
   </div>
 </div>
-{% empty %}
+{% endfor %} {% else %}
 <p>No restaurants found with {{ category.food_type }} in their menu.</p>
-{% endfor %} {% endblock %}
+{% endif %}
+</body>
+</html>

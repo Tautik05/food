@@ -1,0 +1,6 @@
+<!-- order_confirmation.html -->
+<h2>Thank you for your order!</h2>
+<p>Your order ID: {{ order.id }}</p>
+<p>Total Price: ${{ order.total_price }}</p>
+<p>Delivery Address: {{ order.delivery_address }}</p>
+<p>Current Status: {{ order.get_status_display }}</p>

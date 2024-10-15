@@ -4,6 +4,7 @@ from .models import *
 from django.contrib import messages
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
 
 # Create your views here.
 
@@ -118,51 +119,47 @@ def location(request):
 
 
 
-# def category_restaurants(request, food_type):
-#     # Get the food category based on the selected type
-#     category = get_object_or_404(FoodCategory, food_type=food_type)
 
-#     selected_location = request.session.get('customer_selected_location')
-
-
-#     # Get all food items for the selected food category
-#     food_items = Food.objects.filter(food_category=category)
-
-#     # Get distinct restaurants offering food items from this category
-#     restaurants = Restaurant.objects.filter(food_products__in=food_items).distinct()
-
-#     context = {
-#         'restaurants': restaurants,
-#         'food_items': food_items,
-#         'food_type': food_type,
-#         'selected_location': selected_location,  # Pass selected location to the template
-
-#     }
-#     return render(request, 'food-category.html', context)
-
+from django.db.models import OuterRef, Subquery
 
 def category_restaurants(request, category_id):
     category = get_object_or_404(FoodCategory, id=category_id)
-    
-    # Get all restaurants that have food items in this category
-    restaurants = Restaurant.objects.filter(food_products__food_category=category).distinct()
-    
-    # For each restaurant, get the food items in this category
+    selected_location = request.session.get('customer_selected_location')
+
+    # Subquery to get the quantity_left for each food item
+    inventory_subquery = FoodInventoryRecord.objects.filter(
+        food_items=OuterRef('pk')
+    ).values('quantity_left')[:1]  # Limit subquery to return only one value
+
+    # Get all restaurants that have food items in this category and have quantity_left > 0
+    restaurants = Restaurant.objects.filter(
+        food_products__food_category=category,
+        food_products__food_inventory_records__quantity_left__gt=0  # Join with FoodInventoryRecord to ensure quantity_left > 0
+    ).distinct()
+
+    # For each restaurant, get the food items in this category with quantity_left > 0
     restaurant_foods = []
     for restaurant in restaurants:
-        foods = Food.objects.filter(restaurant=restaurant, food_category=category)
-        restaurant_foods.append({
-            'restaurant': restaurant,
-            'foods': foods
-        })
-    
+        foods = Food.objects.filter(
+            restaurant=restaurant,
+            food_category=category
+        ).annotate(
+            quantity_left=Subquery(inventory_subquery)  # Annotate each food with quantity_left
+        ).filter(quantity_left__gt=0)  # Only include food items with available stock
+
+        if foods.exists():
+            restaurant_foods.append({
+                'restaurant': restaurant,
+                'foods': foods
+            })
+
     context = {
         'category': category,
         'restaurant_foods': restaurant_foods,
+        'selected_location': selected_location,  # Pass selected location to the template
     }
-    
-    return render(request, 'food-category.html', context)
 
+    return render(request, 'food-category.html', context)
 
 
 
@@ -256,21 +253,6 @@ def view_cart(request):
 
 
 
-# Update Cart Item Quantity
-# @login_required
-# def update_cart_item(request, cart_item_id):
-#     cart_item = get_object_or_404(CartItem, id=cart_item_id, cart__user=request.user)
-
-#     if request.method == 'POST':
-#         quantity = int(request.POST.get('quantity'))
-#         if quantity > 0:
-#             cart_item.quantity = quantity
-#             cart_item.save()
-#         else:
-#             cart_item.delete()  # Remove item if quantity is zero
-
-#     return redirect('view_cart')
-
 
 
 from django.views.decorators.http import require_POST
@@ -305,11 +287,6 @@ def update_cart_item(request, cart_item_id):
 
 
 
-
-
-
-
-
 # Remove Cart Item
 @login_required
 def remove_cart_item(request, cart_item_id):
@@ -325,19 +302,6 @@ def clear_cart(request):
         cart.delete()  # Clear the cart by deleting the cart object
         messages.success(request, "Your cart has been cleared.")
     return redirect('restaurant_home')
-
-
-# Checkout View (Placeholder for now)
-@login_required
-def checkout(request):
-    # You can later extend this to handle payments, order confirmation, etc.
-    return redirect('view_cart')
-
-
-
-
-
-
 
 
 
@@ -419,7 +383,8 @@ def add_food_item(request):
             inventory=restaurant_inventory,
             food_items=new_food,
             quantity_sold=0,  # default to 0
-            quantity_available=food_quantity  # Set initial available quantity
+            quantity_available=food_quantity,  # Set initial available quantity
+            quantity_left=food_quantity   
         )
         
         return JsonResponse({'success': 'Food item added successfully!'})
@@ -429,23 +394,24 @@ def add_food_item(request):
 
 
 
-def update_quantity_available(request, record_id, action):
+
+
+def update_quantity_available(request, record_id):
     try:
+        # Retrieve the FoodInventoryRecord by its ID
         record = FoodInventoryRecord.objects.get(id=record_id)
-        if action == 'increase':
-            record.quantity_available += 1
-        elif action == 'decrease' and record.quantity_available > 0:
-            record.quantity_available -= 1
 
-        # Check if the quantity available has dropped to zero
-        if record.quantity_available == 0:
-            record.delete()  # Remove the record from inventory
+        # Check if all available items have been ordered (i.e., quantity_left is 0)
+        if record.quantity_left == 0:
+            record.delete()  # Remove the record from the inventory if none are left
+            return JsonResponse({'success': True, 'message': 'Item removed from inventory as it is sold out'})
         else:
+            # Otherwise, just save the updated record
             record.save()
-
-        return JsonResponse({'success': True, 'new_quantity_available': record.quantity_available})
+            return JsonResponse({'success': True, 'new_quantity_available': record.quantity_available})
     
     except FoodInventoryRecord.DoesNotExist:
+        # Handle the case where the record is not found
         return JsonResponse({'success': False, 'error': 'Record not found'}, status=404)
 
 
@@ -454,18 +420,71 @@ def update_quantity_available(request, record_id, action):
 
 
 
+@transaction.atomic
+def checkout(request):
+    cart = get_object_or_404(Cart, user=request.user)
+    cart_items = cart.items.all()
+
+    selected_location = request.session.get('customer_selected_location')
+
+    if not cart_items:
+        return redirect('cart')
+
+    order = Order.objects.create(
+        customer=request.user,
+        total_price=cart.total_price,
+        status='pending',
+        payment_status='PAID',
+        delivery_address=selected_location
+    )
+
+    for cart_item in cart_items:
+        OrderItem.objects.create(
+            order=order,
+            food=cart_item.food_item,
+            quantity=cart_item.quantity,
+            price=cart_item.price
+        )
+
+        inventory_record = FoodInventoryRecord.objects.get(
+            inventory__restaurant_owner=cart_item.food_item.restaurant.restaurant_owner,
+            food_items=cart_item.food_item
+        )
+        inventory_record.quantity_sold += cart_item.quantity
+        inventory_record.quantity_left = inventory_record.quantity_available - inventory_record.quantity_sold
+        if inventory_record.quantity_left == 0:
+            # If no quantity is left, delete the record
+            inventory_record.delete()
+        else:
+            # Otherwise, just save the updated record
+            inventory_record.save()
+    # After creating the order, clear the cart
+    cart.items.all().delete()
+
+    # Redirect to an order confirmation page or any other page
+    return redirect('order_confirmation', order_id=order.id)
 
 
 
-
-# def delete_food(request, id):
-#    queryset = FoodInventoryRecord.objects.get(id = id)
-#    queryset.delete()
-#    return redirect('manage_inventory')
-
-    
+# In views.py
+def order_confirmation(request, order_id):
+    order = get_object_or_404(Order, id=order_id, customer=request.user)
+    return render(request, 'confirmation.html', {'order': order})
 
 
+# Remove Cart Item
+# @login_required
+# def delete_food(request, food_id):
+#     inventory_item = get_object_or_404(FoodInventoryRecord, id=food_id)
+#     inventory_item.delete()  # Remove the item from the cart
+#     return redirect('manage_inventory')
+
+
+@login_required
+def delete_food(request, food_id):
+    inventory_item = get_object_or_404(FoodInventoryRecord, id=food_id)
+    inventory_item.delete()  # Remove the item from the inventory
+    return redirect('manage_inventory')  # Redirect back to the inventory page
 
 
 

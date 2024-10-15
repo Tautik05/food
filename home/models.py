@@ -63,6 +63,7 @@ class FoodInventoryRecord(models.Model):
     food_items=models.ForeignKey(Food,on_delete=models.CASCADE,related_name="food_inventory_records")
     quantity_sold=models.IntegerField(default=0)
     quantity_available=models.IntegerField(default=0)
+    quantity_left=models.IntegerField(default=0)
 
 
     def __str__(self):
@@ -82,7 +83,8 @@ class Cart(models.Model):
 
     @property
     def total_price(self):
-        total = sum([item.total_price for item in self.cart_items.all()])
+        # total = sum([item.total_price for item in self.cart.items.all()])
+        total = sum([item.total_price for item in self.items.all()])
         return total
 
 
@@ -103,6 +105,37 @@ class CartItem(models.Model):
 
 
 
+
+class Order(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('preparing', 'Preparing'),
+        ('ontheway', 'On the Way'),
+        ('delivered', 'Delivered'),
+    ]
+    PAYMENT_STATUS_CHOICES = [
+        ('PAID', 'Paid'),  # After checkout, this will always be set to 'PAID'
+    ]
+
+    customer = models.ForeignKey(CustomUser, on_delete=models.CASCADE,related_name='orders')
+    food_items = models.ManyToManyField(Food, through='OrderItem')
+    total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='PAID')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    delivery_address = models.TextField()  # Address for delivery
+
+
+    def __str__(self):
+        return f"Order {self.id} - {self.user.username}"
+
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE,related_name='Item')
+    food = models.ForeignKey(Food, on_delete=models.CASCADE,related_name='foods')
+    quantity = models.PositiveIntegerField()
+    price = models.IntegerField()
 
 
 
