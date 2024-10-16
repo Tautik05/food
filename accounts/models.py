@@ -73,6 +73,14 @@ class CustomerLocation(models.Model):
 
 
 
+class DeliveryPartnerLocation(models.Model):
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='delivery_location')
+    latitude = models.CharField(max_length=200, default=None)
+    longitude = models.CharField(max_length=200, default=None)
+
+    def __str__(self):
+        return f"{self.user.email} - Location"
+
 
 
 

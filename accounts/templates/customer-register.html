@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -49,6 +49,51 @@
             name="password"
             class="form-control"
             id="password"
+            required
+          />
+        </div>
+        <button type="submit">Register</button>
+      </form>
+      <p>Already have an account? <a href="/customer-login/">Login</a></p>
+    </div>
+  </body>
+</html> -->
+
+<!-- Example of customer registration form -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register - Fast Food Delivery</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/log.css' %}" />
+  </head>
+  <body>
+    <div class="register-container">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <h2>Register</h2>
+        <hr />
+        {% if messages %}
+        <div class="alert alert-primary" role="alert">
+          {% for message in messages %} {{ message }} {% endfor %}
+        </div>
+        {% endif %}
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" class="form-control" name="email_id" required />
+        </div>
+        <div class="form-group">
+          <label for="name">Name</label>
+          <input type="text" class="form-control" name="user_name" required />
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input
+            type="password"
+            class="form-control"
+            name="password"
             required
           />
         </div>

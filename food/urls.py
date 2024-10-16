@@ -43,8 +43,6 @@ urlpatterns = [
 
     path('cart/add/<int:food_id>/', add_to_cart, name='add_to_cart'),
 
-    # path('cart/add/<int:food_id>/', add_to_cart, name='add_to_cart'),
-
     path('cart/update/<int:cart_item_id>/', update_cart_item, name='update_cart_item'),
 
     path('cart/remove/<int:cart_item_id>/', remove_cart_item, name='remove_cart_item'),
@@ -55,6 +53,13 @@ urlpatterns = [
     path('checkout/', checkout, name='checkout'),
 
     path('order-confirmation/<int:order_id>/', order_confirmation, name='order_confirmation'),
+
+    path('delivery-dashboard/', deliverypartner_dashboard, name='deliverypartner_dashboard'),  # Add this line
+
+    path('update_location/', update_location, name='update_location'),
+
+    path('assign-delivery-partner/<int:order_id>/', assign_closest_delivery_partner, name='assign_delivery_partner'),  # Endpoint for assigning closest delivery partner to an order
+
 
     path('add_food/', add_food_item, name='add_food_item'),
     # path('restaurant/location/',restaurant_location, name='restaurant_location'),

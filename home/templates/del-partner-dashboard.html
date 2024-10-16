@@ -1,0 +1,78 @@
+<!-- deliverypartner_dashboard.html -->
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Delivery Partner Dashboard</title>
+    <link rel="stylesheet" href="{% static 'css/del-partner.css' %}" />
+    <link rel="shortcut icon" href="#" />
+
+    <script>
+      // Function to get and send the delivery partner's location
+      function updateLocation() {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function (position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+
+            // Fetch CSRF token from cookies
+            const csrftoken = document.querySelector(
+              "[name=csrfmiddlewaretoken]"
+            ).value;
+
+            // Send the coordinates to the backend
+            fetch("/update_location/", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrftoken,
+              },
+              body: JSON.stringify({
+                latitude: latitude,
+                longitude: longitude,
+              }),
+            })
+              .then((response) => {
+                if (!response.ok) {
+                  // If response is not OK, throw an error
+                  throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json(); // Parse JSON if the response is OK
+              })
+              .then((data) => {
+                alert(data.message);
+              })
+              .catch((error) => {
+                console.error("Error:", error); // This will catch errors like 404 or invalid JSON
+                alert("An error occurred: " + error.message);
+              });
+          });
+        } else {
+          alert("Geolocation is not supported by this browser.");
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <h1>Welcome, {{ user.name }}</h1>
+
+    <h2>Set Your Current Location:</h2>
+    <button onclick="updateLocation()">Add/Update Location</button>
+
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}" />
+
+    <h3>Your Assigned Orders:</h3>
+    <ul>
+      {% for order in orders %}
+      <li>
+        {{ order.food_items.all.0.restaurant.restaurant_name }} - {{
+        order.status }}
+      </li>
+      {% empty %}
+      <li>No orders assigned yet.</li>
+      {% endfor %}
+    </ul>
+  </body>
+</html>

@@ -461,6 +461,9 @@ def checkout(request):
     # After creating the order, clear the cart
     cart.items.all().delete()
 
+    assign_closest_delivery_partner(order)
+
+
     # Redirect to an order confirmation page or any other page
     return redirect('order_confirmation', order_id=order.id)
 
@@ -490,5 +493,147 @@ def delete_food(request, food_id):
 
 
 
+def deliverypartner_dashboard(request):
+    # Ensure the user is authenticated and is a delivery partner
+    if request.user.is_authenticated and request.user.role == 'deliverypartner':
+        # Get orders assigned to the delivery partner
+        orders = Order.objects.filter(delivery_partner=request.user)
+        return render(request, 'del-partner-dashboard.html', {'orders': orders})
+    
+    else:
+        messages.error(request, 'You need to log in as a delivery partner to access this page.')
+        return redirect('delivery-login/')  # Redirect to login if the user is not authenticated
 
-#333
+
+# def update_location(request):
+#     if request.method == 'POST':
+#         data = json.loads(request.body)
+#         latitude = data.get('latitude')
+#         longitude = data.get('longitude')
+
+#         if not latitude or not longitude:
+#             return JsonResponse({'message': 'Invalid location data'}, status=400)
+
+#         # Update the delivery partner's location
+#         delivery_partner = request.user
+#         location, created = CustomerLocation.objects.update_or_create(
+#             user=delivery_partner,
+#             defaults={'latitude': latitude, 'longitude': longitude}
+#         )
+
+#         return JsonResponse({'message': 'Location updated successfully!'})
+
+
+# @login_required
+# def update_location(request):
+#     if request.method == "POST":
+#         try:
+#             data = json.loads(request.body.decode('utf-8'))
+#             latitude = data.get('latitude')
+#             longitude = data.get('longitude')
+
+#             # Update the user's location in the database (assuming CustomUser has latitude and longitude fields)
+#             user = request.user
+#             user.latitude = latitude
+#             user.longitude = longitude
+#             user.save()
+
+#             return JsonResponse({'message': 'Location updated successfully!'})
+#         except Exception as e:
+#             return JsonResponse({'error': str(e)}, status=400)
+#     else:
+#         return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+
+
+# views.py
+
+from .models import DeliveryPartnerLocation
+
+def update_location(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+            latitude = data.get('latitude')
+            longitude = data.get('longitude')
+
+            # Ensure that the user is a delivery partner
+            user = request.user
+            if user.role != 'deliverypartner':
+                return JsonResponse({'error': 'Only delivery partners can update location'}, status=403)
+
+            # Update or create the delivery partner's location
+            location, created = DeliveryPartnerLocation.objects.update_or_create(
+                user=user,
+                defaults={'latitude': latitude, 'longitude': longitude}
+            )
+
+            return JsonResponse({'message': 'Location updated successfully!'})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    else:
+        return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+
+
+
+import requests
+from .models import Order, CustomUser, CustomerLocation
+
+# Function to calculate distance using OpenRouteService
+def calculate_distance(lat1, lon1, lat2, lon2):
+    ORS_API_KEY = '5b3ce3597851110001cf6248c1d0279576184e8080545073932c8b5c'
+    url = f"https://api.openrouteservice.org/v2/directions/driving-car"
+    
+    coordinates = [[lon1, lat1], [lon2, lat2]]
+    payload = {"coordinates": coordinates}
+    headers = {
+        'Authorization': ORS_API_KEY,
+        'Content-Type': 'application/json'
+    }
+
+    response = requests.post(url, json=payload, headers=headers)
+    
+    if response.status_code == 200:
+        data = response.json()
+        # Extract the distance in meters
+        distance = data['routes'][0]['summary']['distance']
+        return distance / 1000  # Return distance in kilometers
+    else:
+        return None
+
+# Function to assign the closest delivery partner to the order
+def assign_closest_delivery_partner(order):
+    restaurant = order.food_items.first().restaurant
+    restaurant_latitude = restaurant.latitude
+    restaurant_longitude = restaurant.longitude
+
+    # Get active delivery partners
+    delivery_partners = CustomUser.objects.filter(role='deliverypartner', is_active=True)
+    closest_partner = None
+    min_distance = float('inf')
+
+    for partner in delivery_partners:
+        try:
+            location = CustomerLocation.objects.get(user=partner)
+            distance = calculate_distance(
+                lat1=restaurant_latitude, lon1=restaurant_longitude,
+                lat2=float(location.latitude), lon2=float(location.longitude)
+            )
+
+            if distance and distance < min_distance:
+                min_distance = distance
+                closest_partner = partner
+
+        except CustomerLocation.DoesNotExist:
+            continue  # Skip if location not set
+
+    if closest_partner:
+        order.delivery_partner = closest_partner
+        order.status = 'preparing'
+        order.save()
+        print(f"Assigned delivery partner {closest_partner.name} to order {order.id}")
+    else:
+        print("No available delivery partners.")
+
+

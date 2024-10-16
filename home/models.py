@@ -118,6 +118,7 @@ class Order(models.Model):
     ]
 
     customer = models.ForeignKey(CustomUser, on_delete=models.CASCADE,related_name='orders')
+    delivery_partner = models.ForeignKey(CustomUser, null=True, blank=True, related_name='delivery_orders', on_delete=models.SET_NULL)
     food_items = models.ManyToManyField(Food, through='OrderItem')
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
