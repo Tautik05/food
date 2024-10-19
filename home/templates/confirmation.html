@@ -1,4 +1,13 @@
 <!-- order_confirmation.html -->
+
+<script>
+  // Show a message if no delivery partner is found (use this in the customer confirmation page)
+  function notifyCustomerNoDeliveryPartner(orderId) {
+    alert(
+      `Unfortunately, no delivery partner is available for your order ID: ${orderId}. Please try again later.`
+    );
+  }
+</script>
 <h2>Thank you for your order!</h2>
 <p>Your order ID: {{ order.id }}</p>
 <p>Total Price: ${{ order.total_price }}</p>

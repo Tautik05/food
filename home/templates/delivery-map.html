@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Delivery Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+      #map {
+        height: 600px;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Order Confirmation</h1>
+    <div id="map"></div>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+      // Initialize the map
+      const map = L.map("map").setView([51.505, -0.09], 13); // Default coordinates
+
+      // Set up OpenStreetMap tile layer
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "© OpenStreetMap",
+      }).addTo(map);
+
+      // Add markers for the restaurant and the user's location
+      const restaurantLocation = [
+        ,/* Restaurant Latitude */
+        /* Restaurant Longitude */
+      ];
+      const userLocation = [
+        ,/* User Latitude */
+        /* User Longitude */
+      ];
+
+      // Create markers
+      const restaurantMarker = L.marker(restaurantLocation)
+        .addTo(map)
+        .bindPopup("Restaurant")
+        .openPopup();
+      const userMarker = L.marker(userLocation)
+        .addTo(map)
+        .bindPopup("You")
+        .openPopup();
+
+      // Marker for the delivery partner
+      let deliveryPartnerMarker = L.marker([
+        ,/* Delivery Partner Latitude */
+        /* Delivery Partner Longitude */
+      ])
+        .addTo(map)
+        .bindPopup("Delivery Partner");
+
+      // Function to update delivery partner's location
+      function updateDeliveryPartnerLocation(lat, lon) {
+        deliveryPartnerMarker.setLatLng([lat, lon]);
+        map.setView([lat, lon]);
+      }
+
+      // Connect to your Kafka WebSocket or polling endpoint to receive updates
+      // Example of a WebSocket connection
+      const socket = new WebSocket("ws://your-kafka-websocket-url");
+
+      socket.onmessage = function (event) {
+        const data = JSON.parse(event.data);
+        // Assume data has latitude and longitude for the delivery partner
+        updateDeliveryPartnerLocation(data.latitude, data.longitude);
+      };
+    </script>
+  </body>
+</html>

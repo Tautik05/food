@@ -34,30 +34,6 @@ def customer_register_page(request):
     return render(request, 'customer-register.html')
 
 
-# def customer_login_page(request):
-
-#     if request.method == "POST":
-#         email = request.POST.get('email_id')
-#         role = request.POST.get('role')
-#         password=request.POST.get('password')
-
-#         try:
-#             customer = CustomUser.objects.get(email=email, role=role)
-#             if customer.check_password(password):
-#                 login(request, customer)
-#                 messages.success(request, 'Login successful!')
-#                 return redirect('home')
-#             else:
-#                 messages.error(request, 'Invalid password. Please try again.')
-#                 return redirect('customer-login/')  # Redirect back to login page
-#         except CustomUser.DoesNotExist:
-#             messages.info(request, 'User does not exist. Please create an account.')
-#             return redirect('/customer-register/')
-
-#     return render(request, 'customer-login.html')
-
-
-
 
 def owner_register_page(request):
     if request.method == "POST":
@@ -82,34 +58,6 @@ def owner_register_page(request):
             return redirect('owner_login_page') 
 
     return render(request, 'owner-register.html')
-
-
-
-# def owner_login_page(request):
-    
-#     if request.method == "POST":
-#         email = request.POST.get('email_id')
-#         role = request.POST.get('role')
-#         password=request.POST.get('password')
-
-#         try:
-#             owner = CustomUser.objects.get(email=email, role=role)
-#             if owner.check_password(password):
-#                 login(request, owner)
-#                 messages.success(request, 'Login successful!')
-#                 # Check if the owner already has a registered restaurant
-#                 if Restaurant.objects.filter(restaurant_owner=owner).exists():
-#                     return redirect('manage_inventory')  # Redirect to restaurant home if already registered
-#                 else:
-#                     return redirect('register_restaurant')
-#             else:
-#                 messages.error(request, 'Invalid password. Please try again.')
-#                 return redirect('owner_login_page')  # Redirect back to login page
-#         except CustomUser.DoesNotExist:
-#             messages.info(request, 'User does not exist. Please create an account.')
-#             return redirect('/owner-register/')
-
-#     return render(request, 'owner-login.html')
 
 
 
@@ -139,31 +87,6 @@ def deliverypartner_register_page(request):
             return redirect('deliverypartner_dashboard') 
 
     return render(request, 'deliverypartner-register.html')
-
-
-
-# def deliverypartner_login_page(request):
-
-#     if request.method == "POST":
-#         email = request.POST.get('email_id')
-#         role = request.POST.get('role')
-#         password=request.POST.get('password')
-  
-#         try:
-#             customer = CustomUser.objects.get(email=email, role=role)
-#             if customer.check_password(password):
-#                 login(request, customer)
-#                 messages.success(request, 'Login successful!')
-#                 return redirect('deliverypartner_dashboard')
-#             else:
-#                 messages.error(request, 'Invalid password. Please try again.')
-#                 return redirect('delivery-login/')  # Redirect back to login page
-#         except CustomUser.DoesNotExist:
-#             messages.info(request, 'User does not exist. Please create an account.')
-#             return redirect('/delivery-register/')
-
-#     return render(request, 'deliverypartner-login.html')
-
 
 
 
@@ -220,8 +143,6 @@ def register_restaurant(request):
     return render(request, 'restaurantsignup.html')
 
 
-
-
 def login_page(request):
     if request.method == "POST":
         email = request.POST.get('email_id')
@@ -240,7 +161,10 @@ def login_page(request):
                 if user.role == 'customer':
                     return redirect('home')  # Redirect to the customer home page
                 elif user.role == 'owner':
-                    return redirect('manage_inventory')  # Redirect to the owner home page
+                    if Restaurant.objects.filter(restaurant_owner=user).exists():
+                        return redirect('manage_inventory')  # Redirect to the owner home page
+                    else:
+                        return redirect('register_restaurant')
                 elif user.role == 'deliverypartner':
                     return redirect('deliverypartner_dashboard')  # Redirect to the delivery partner dashboard
                 else:
@@ -262,11 +186,6 @@ def login_page(request):
 def logout_page(request):
    logout(request)
    return redirect('home')
-
-def owner_logout_page(request):
-   logout(request)
-   return redirect('owner_login_page')
-
 
 
 

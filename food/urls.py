@@ -15,16 +15,18 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path,include
 from django.conf import settings
 from django.conf.urls.static import static
 from home.views import *
 from accounts.views import *
+
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 
 
 urlpatterns = [
+    
     path('', home, name='home'),
 
     path('category/<int:category_id>/', category_restaurants, name='category_restaurants'),
@@ -49,7 +51,6 @@ urlpatterns = [
 
     path('cart/clear/', clear_cart, name='clear_cart'),
 
-
     path('checkout/', checkout, name='checkout'),
 
     path('order-confirmation/<int:order_id>/', order_confirmation, name='order_confirmation'),
@@ -60,38 +61,41 @@ urlpatterns = [
 
     path('assign-delivery-partner/<int:order_id>/', assign_closest_delivery_partner, name='assign_delivery_partner'),  # Endpoint for assigning closest delivery partner to an order
 
+    path('delivery/accept-decline/<int:order_id>/', handle_accept_decline, name='accept_decline'),
+
+    path('order/cancellation/', order_cancellation, name='order_cancellation'),  # Add this line
+
 
     path('add_food/', add_food_item, name='add_food_item'),
     # path('restaurant/location/',restaurant_location, name='restaurant_location'),
-    path('owner/logout',owner_logout_page,name='owner_logout_page'),
 
     path('save-location/', save_customer_location_to_session, name='save_location_to_session'),
 
     path('home/location/',location, name='location'),
-
-    path('customer-login/', customer_login_page, name='customer_login_page'),
+    
+    path('login/', login_page, name='login_page'),
 
     path('customer-register/', customer_register_page, name='customer_register_page'),
-
-    path('owner-login/', owner_login_page, name='owner_login_page'),
 
     path('owner-register/', owner_register_page, name='owner_register_page'),
     
     path('restaurant-register/', register_restaurant, name='register_restaurant'),
 
-    path('delivery-login/', deliverypartner_login_page, name='deliverypartner_login_page'),
-
     path('delivery-register/', deliverypartner_register_page, name='deliverypartner_register_page'),
 
     path('logout/', logout_page, name='logout_page'),
 
+    path('logout-view/', logout_view, name='logout_view'),
+
+    # path('home/', include('home.urls')),  # Update with your actual app name
+
     path('admin/', admin.site.urls),
 ]
 
+from home.routing import websocket_urlpatterns
 
 
-
-
+urlpatterns += websocket_urlpatterns
 
 
 
@@ -108,3 +112,5 @@ if settings.DEBUG:
 # urlpatterns = [
 #     path('admin/', admin.site.urls),
 # ]
+
+# http://127.0.0.1:8000/

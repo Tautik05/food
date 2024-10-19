@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
 ]
 
 EXTERNAL_APPS = [ 'home',
@@ -109,8 +110,10 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'food.wsgi.application'
+#i will remove this later
+# WSGI_APPLICATION = 'food.wsgi.application'
 
+ASGI_APPLICATION = 'food.asgi.application'  # Replace with your actual project name
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
@@ -218,6 +221,14 @@ STATICFILES_DIRS =[
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+
+
+# Channels Configuration (without Redis)
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',  # Use in-memory channel layer for development/testing
+    },
+}
 
 #Newly added
 
