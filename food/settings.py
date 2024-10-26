@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'firebase_admin'
 ]
 
 EXTERNAL_APPS = [ 'home',
@@ -218,7 +219,8 @@ STATICFILES_DIRS =[
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-
+FIREBASE_SERVICE_ACCOUNT_KEY = os.path.join(BASE_DIR, 'config', 'firebase_credentials.json')  # Adjust the filename if necessary
+FIREBASE_DATABASE_URL = 'https://dine-9153a-default-rtdb.asia-southeast1.firebasedatabase.app/'  # Your Firebase database URL
 #Newly added
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

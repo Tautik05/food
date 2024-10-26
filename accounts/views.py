@@ -240,7 +240,9 @@ def login_page(request):
                 if user.role == 'customer':
                     return redirect('home')  # Redirect to the customer home page
                 elif user.role == 'owner':
-                    return redirect('manage_inventory')  # Redirect to the owner home page
+                # Check if the owner already has a registered restaurant
+                    if Restaurant.objects.filter(restaurant_owner=user).exists():
+                      return redirect('manage_inventory')  # Redirect to the owner home page
                 elif user.role == 'deliverypartner':
                     return redirect('deliverypartner_dashboard')  # Redirect to the delivery partner dashboard
                 else:
@@ -257,15 +259,10 @@ def login_page(request):
     return render(request, 'login.html')  # Render the login template
 
 
-
-
 def logout_page(request):
    logout(request)
    return redirect('home')
 
-def owner_logout_page(request):
-   logout(request)
-   return redirect('owner_login_page')
 
 
 

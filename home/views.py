@@ -5,15 +5,22 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-
-# Create your views here.
-
+import requests
+from .firebase import send_location_to_firebase
+import logging
 from django.http import JsonResponse
 import json
 from django.shortcuts import render
 from django.core.serializers.json import DjangoJSONEncoder
-import json
 from decimal import Decimal
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
+from .firebase import update_firebase_order
+from django.db.models import Q
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
 
 class DecimalEncoder(DjangoJSONEncoder):
     def default(self, obj):
@@ -21,11 +28,6 @@ class DecimalEncoder(DjangoJSONEncoder):
             return float(obj)
         return super().default(obj)
 
-
-
-
-
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -53,9 +55,6 @@ def home(request):
     }
 
     return render(request, 'home.html', context)
-
-
-
 
 
 
@@ -188,8 +187,6 @@ def restaurant_home(request,restaurant_id):
 
 
 
-
-
 @login_required
 def add_to_cart(request, food_id):
     if request.user.is_authenticated:
@@ -253,10 +250,6 @@ def view_cart(request):
 
 
 
-
-
-from django.views.decorators.http import require_POST
-
 @require_POST
 def update_cart_item(request, cart_item_id):
     cart_item = get_object_or_404(CartItem, id=cart_item_id, cart__user=request.user)
@@ -301,7 +294,7 @@ def clear_cart(request):
     if cart:
         cart.delete()  # Clear the cart by deleting the cart object
         messages.success(request, "Your cart has been cleared.")
-    return redirect('restaurant_home')
+    return redirect('home')
 
 
 
@@ -393,9 +386,6 @@ def add_food_item(request):
 
 
 
-
-
-
 def update_quantity_available(request, record_id):
     try:
         # Retrieve the FoodInventoryRecord by its ID
@@ -416,72 +406,13 @@ def update_quantity_available(request, record_id):
 
 
 
-
-
-
-
-@transaction.atomic
-def checkout(request):
-    cart = get_object_or_404(Cart, user=request.user)
-    cart_items = cart.items.all()
-
-    selected_location = request.session.get('customer_selected_location')
-
-    if not cart_items:
-        return redirect('cart')
-
-    order = Order.objects.create(
-        customer=request.user,
-        total_price=cart.total_price,
-        status='pending',
-        payment_status='PAID',
-        delivery_address=selected_location
-    )
-
-    for cart_item in cart_items:
-        OrderItem.objects.create(
-            order=order,
-            food=cart_item.food_item,
-            quantity=cart_item.quantity,
-            price=cart_item.price
-        )
-
-        inventory_record = FoodInventoryRecord.objects.get(
-            inventory__restaurant_owner=cart_item.food_item.restaurant.restaurant_owner,
-            food_items=cart_item.food_item
-        )
-        inventory_record.quantity_sold += cart_item.quantity
-        inventory_record.quantity_left = inventory_record.quantity_available - inventory_record.quantity_sold
-        if inventory_record.quantity_left == 0:
-            # If no quantity is left, delete the record
-            inventory_record.delete()
-        else:
-            # Otherwise, just save the updated record
-            inventory_record.save()
-    # After creating the order, clear the cart
-    cart.items.all().delete()
-
-    assign_closest_delivery_partner(order)
-
-
-    # Redirect to an order confirmation page or any other page
-    return redirect('order_confirmation', order_id=order.id)
-
-
-
-# In views.py
 def order_confirmation(request, order_id):
     order = get_object_or_404(Order, id=order_id, customer=request.user)
     return render(request, 'confirmation.html', {'order': order})
 
 
-# Remove Cart Item
-# @login_required
-# def delete_food(request, food_id):
-#     inventory_item = get_object_or_404(FoodInventoryRecord, id=food_id)
-#     inventory_item.delete()  # Remove the item from the cart
-#     return redirect('manage_inventory')
-
+def order_cancellation(request):
+    return render(request, 'cancel.html')  # Create an HTML template for cancellation
 
 @login_required
 def delete_food(request, food_id):
@@ -490,65 +421,29 @@ def delete_food(request, food_id):
     return redirect('manage_inventory')  # Redirect back to the inventory page
 
 
-
-
-
 def deliverypartner_dashboard(request):
     # Ensure the user is authenticated and is a delivery partner
     if request.user.is_authenticated and request.user.role == 'deliverypartner':
-        # Get orders assigned to the delivery partner
         orders = Order.objects.filter(delivery_partner=request.user)
-        return render(request, 'del-partner-dashboard.html', {'orders': orders})
+        firebase_config = {
+            'apiKey': os.getenv("FIREBASE_API_KEY"),
+            'authDomain': os.getenv("FIREBASE_AUTH_DOMAIN"),
+            'databaseURL': os.getenv("FIREBASE_DATABASE_URL"),
+            'projectId': os.getenv("FIREBASE_PROJECT_ID"),
+            'storageBucket': os.getenv("FIREBASE_STORAGE_BUCKET"),
+            'messagingSenderId': os.getenv("FIREBASE_MESSAGING_SENDER_ID"),
+            'appId': os.getenv("FIREBASE_APP_ID"),
+            'measurementId': os.getenv("FIREBASE_MEASUREMENT_ID"),
+        }
+
+
+        return render(request, 'del-partner-dashboard.html', {'orders': orders,'firebase_config': firebase_config})
     
     else:
         messages.error(request, 'You need to log in as a delivery partner to access this page.')
-        return redirect('delivery-login/')  # Redirect to login if the user is not authenticated
+        return redirect('login_page')  # Redirect to login if the user is not authenticated
 
 
-# def update_location(request):
-#     if request.method == 'POST':
-#         data = json.loads(request.body)
-#         latitude = data.get('latitude')
-#         longitude = data.get('longitude')
-
-#         if not latitude or not longitude:
-#             return JsonResponse({'message': 'Invalid location data'}, status=400)
-
-#         # Update the delivery partner's location
-#         delivery_partner = request.user
-#         location, created = CustomerLocation.objects.update_or_create(
-#             user=delivery_partner,
-#             defaults={'latitude': latitude, 'longitude': longitude}
-#         )
-
-#         return JsonResponse({'message': 'Location updated successfully!'})
-
-
-# @login_required
-# def update_location(request):
-#     if request.method == "POST":
-#         try:
-#             data = json.loads(request.body.decode('utf-8'))
-#             latitude = data.get('latitude')
-#             longitude = data.get('longitude')
-
-#             # Update the user's location in the database (assuming CustomUser has latitude and longitude fields)
-#             user = request.user
-#             user.latitude = latitude
-#             user.longitude = longitude
-#             user.save()
-
-#             return JsonResponse({'message': 'Location updated successfully!'})
-#         except Exception as e:
-#             return JsonResponse({'error': str(e)}, status=400)
-#     else:
-#         return JsonResponse({'error': 'Invalid request method'}, status=405)
-
-
-
-# views.py
-
-from .models import DeliveryPartnerLocation
 
 def update_location(request):
     if request.method == "POST":
@@ -576,14 +471,56 @@ def update_location(request):
 
 
 
+def update_location_view(request):
+    if request.method == 'POST':
+        try:
+            # Parse JSON data
+            data = json.loads(request.body)
+            latitude = data.get('latitude')
+            longitude = data.get('longitude')
+            partner_id = request.user.id  # Assuming the user is authenticated and is a delivery partner
 
-import requests
-from .models import Order, CustomUser, CustomerLocation
+            if latitude and longitude:
+                # Send the location to Firebase
+                send_location_to_firebase(partner_id, latitude, longitude)
+                return JsonResponse({'message': 'Location updated successfully.'})
+            else:
+                return JsonResponse({'error': 'Invalid location data.'}, status=400)
+
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON data.'}, status=400)
+
+    return JsonResponse({'error': 'Invalid request method.'}, status=400)
+
+
+
+
+def get_delivery_partner_location(request, order_id):
+    if request.user.is_authenticated:
+        try:
+            # Get the order with the given order_id
+            order = Order.objects.get(id=order_id, customer=request.user)
+            if order.delivery_partner:
+                # Get the location of the assigned delivery partner
+                location = DeliveryPartnerLocation.objects.get(user=order.delivery_partner)
+                return JsonResponse({
+                    'latitude': location.latitude,
+                    'longitude': location.longitude,
+                })
+            return JsonResponse({'message': 'No delivery partner assigned yet'}, status=200)
+        except Order.DoesNotExist:
+            return JsonResponse({'error': 'Order not found'}, status=404)
+        except DeliveryPartnerLocation.DoesNotExist:
+            return JsonResponse({'error': 'Location not found'}, status=404)
+    return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+
 
 # Function to calculate distance using OpenRouteService
 def calculate_distance(lat1, lon1, lat2, lon2):
-    ORS_API_KEY = '5b3ce3597851110001cf6248c1d0279576184e8080545073932c8b5c'
-    url = f"https://api.openrouteservice.org/v2/directions/driving-car"
+    ORS_API_KEY = os.getenv("ORS_API_KEY")
+    ORS_API_URL = os.getenv("ORS_API_URL")
+
     
     coordinates = [[lon1, lat1], [lon2, lat2]]
     payload = {"coordinates": coordinates}
@@ -592,7 +529,7 @@ def calculate_distance(lat1, lon1, lat2, lon2):
         'Content-Type': 'application/json'
     }
 
-    response = requests.post(url, json=payload, headers=headers)
+    response = requests.post(ORS_API_URL, json=payload, headers=headers)
     
     if response.status_code == 200:
         data = response.json()
@@ -602,38 +539,183 @@ def calculate_distance(lat1, lon1, lat2, lon2):
     else:
         return None
 
-# Function to assign the closest delivery partner to the order
-def assign_closest_delivery_partner(order):
-    restaurant = order.food_items.first().restaurant
-    restaurant_latitude = restaurant.latitude
-    restaurant_longitude = restaurant.longitude
 
-    # Get active delivery partners
-    delivery_partners = CustomUser.objects.filter(role='deliverypartner', is_active=True)
+@transaction.atomic
+def checkout(request):
+    cart = get_object_or_404(Cart, user=request.user)
+    cart_items = cart.items.all()
+
+    selected_location = request.session.get('customer_selected_location')
+
+    if not cart_items:
+        return redirect('cart')
+
+    # Create the order
+    order = Order.objects.create(
+        customer=request.user,
+        total_price=cart.total_price,
+        status='pending',
+        payment_status='PAID',
+        delivery_address=selected_location
+    )
+
+    # Create order items
+    for cart_item in cart_items:
+        OrderItem.objects.create(
+            order=order,
+            food=cart_item.food_item,
+            quantity=cart_item.quantity,
+            price=cart_item.price
+        )
+
+        inventory_record = FoodInventoryRecord.objects.get(
+            inventory__restaurant_owner=cart_item.food_item.restaurant.restaurant_owner,
+            food_items=cart_item.food_item
+        )
+        inventory_record.quantity_sold += cart_item.quantity
+        inventory_record.quantity_left = inventory_record.quantity_available - inventory_record.quantity_sold
+        if inventory_record.quantity_left == 0:
+            inventory_record.delete()  # Delete the record if no quantity is left
+        else:
+            inventory_record.save()  # Save the updated record
+
+    # Clear the cart
+    cart.items.all().delete()
+
+    # Try to assign a delivery partner
+    if not assign_closest_delivery_partner(order):
+        # If no delivery partner found, set the order status and show a message
+        order.status = 'no_delivery_partner'
+        order.save()
+        messages.error(request, "No delivery partner is currently available to take your order.")
+        return redirect('order_cancellation')  # Redirect to the order cancellation page
+
+    # Redirect to the order confirmation page
+    return redirect('delivery_map', order_id=order.id, partner_id=order.delivery_partner.id)
+
+
+
+
+def assign_closest_delivery_partner(order, exclude_partners=None):
+    restaurant = order.food_items.first().restaurant
+    restaurant_latitude = float(restaurant.latitude)
+    restaurant_longitude = float(restaurant.longitude)
+
+    exclude_partners = exclude_partners or []
+
+    # Get all delivery partners who are active, not in the excluded list, and not assigned to an ongoing order
+    delivery_partners = CustomUser.objects.filter(
+        role='deliverypartner',
+        is_active=True
+    ).exclude(id__in=exclude_partners).exclude(
+        # Exclude partners with active (non-delivered) orders
+        Q(delivery_orders__status__in=['ontheway', 'preparing', 'pending'])
+    )
+
     closest_partner = None
     min_distance = float('inf')
 
+    # Iterate through delivery partners to find the closest one
     for partner in delivery_partners:
         try:
-            location = CustomerLocation.objects.get(user=partner)
+            location = DeliveryPartnerLocation.objects.get(user=partner)
             distance = calculate_distance(
                 lat1=restaurant_latitude, lon1=restaurant_longitude,
                 lat2=float(location.latitude), lon2=float(location.longitude)
             )
-
-            if distance and distance < min_distance:
+            if distance < min_distance:
                 min_distance = distance
                 closest_partner = partner
-
-        except CustomerLocation.DoesNotExist:
-            continue  # Skip if location not set
+        except DeliveryPartnerLocation.DoesNotExist:
+            continue  # Skip if no location is available
 
     if closest_partner:
         order.delivery_partner = closest_partner
-        order.status = 'preparing'
+        order.status = 'ontheway'  # Automatically set status to 'ontheway'
         order.save()
-        print(f"Assigned delivery partner {closest_partner.name} to order {order.id}")
+
+        # Update Firebase with the order details only if a partner is found
+        order_details = {
+            'order_id': order.id,
+            'delivery_address': order.delivery_address,
+        }
+        print(f"Updating Firebase for partner ID {closest_partner.id} with order details: {order_details}")
+
+        update_firebase_order(closest_partner.id, order_details)
+
+        return True
     else:
-        print("No available delivery partners.")
+        # No delivery partner found, update the order status
+        order.status = 'no_delivery_partner'
+        order.save()
+        return False
+
+
+
+def delivery_map(request, order_id, partner_id):
+    order = get_object_or_404(Order, id=order_id)
+
+    # Get the customer location from the delivery address (assuming you store latitude/longitude in CustomerLocation)
+    customer_location = CustomerLocation.objects.filter(user=order.customer).first()
+
+    # Get the restaurant location by fetching the first restaurant related to the order's food items
+    first_food_item = order.food_items.first()
+    restaurant = first_food_item.restaurant if first_food_item else None
+
+    # Ensure customer and restaurant data is available
+    customer_lat = customer_location.latitude if customer_location else None
+    customer_lng = customer_location.longitude if customer_location else None
+    restaurant_lat = restaurant.latitude if restaurant else None
+    restaurant_lng = restaurant.longitude if restaurant else None
+
+    firebase_config = {
+    'apiKey': os.getenv("FIREBASE_API_KEY"),
+    'authDomain': os.getenv("FIREBASE_AUTH_DOMAIN"),
+    'databaseURL': os.getenv("FIREBASE_DATABASE_URL"),
+    'projectId': os.getenv("FIREBASE_PROJECT_ID"),
+    'storageBucket': os.getenv("FIREBASE_STORAGE_BUCKET"),
+    'messagingSenderId': os.getenv("FIREBASE_MESSAGING_SENDER_ID"),
+    'appId': os.getenv("FIREBASE_APP_ID"),
+    'measurementId': os.getenv("FIREBASE_MEASUREMENT_ID"),
+    }
+
+    context = {
+        'order': order,
+        'partner_id': partner_id,  # Pass the partner ID to the template context
+        'customer_lat': customer_lat,
+        'customer_lng': customer_lng,
+        'restaurant_lat': restaurant_lat,
+        'restaurant_lng': restaurant_lng,
+        'firebase_config': firebase_config  # Add Firebase config to context
+    }
+    
+    return render(request, 'delivery_map.html', context)
+
+
+
+
+from django.contrib.auth import logout
+
+def logout_view(request):
+    if request.user.is_authenticated and request.user.role == 'deliverypartner':
+        # Get all accepted orders for the delivery partner
+        accepted_orders = Order.objects.filter(delivery_partner=request.user, status='ontheway')
+
+        # Mark each order as delivered and delete it
+        for order in accepted_orders:
+            order.status = 'delivered'  
+            order.delete()  
+
+        # Optionally, you could also choose to delete the location information
+        DeliveryPartnerLocation.objects.filter(user=request.user).delete()
+
+    logout(request)  # Logout the user
+    return redirect('login_page')  # Redirect to the login page
+
+
+
+
+
+
 
 

@@ -1,4 +1,3 @@
-<!-- deliverypartner_dashboard.html -->
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -6,73 +5,239 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Delivery Partner Dashboard</title>
-    <link rel="stylesheet" href="{% static 'css/del-partner.css' %}" />
     <link rel="shortcut icon" href="#" />
-
-    <script>
-      // Function to get and send the delivery partner's location
-      function updateLocation() {
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(function (position) {
-            const latitude = position.coords.latitude;
-            const longitude = position.coords.longitude;
-
-            // Fetch CSRF token from cookies
-            const csrftoken = document.querySelector(
-              "[name=csrfmiddlewaretoken]"
-            ).value;
-
-            // Send the coordinates to the backend
-            fetch("/update_location/", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": csrftoken,
-              },
-              body: JSON.stringify({
-                latitude: latitude,
-                longitude: longitude,
-              }),
-            })
-              .then((response) => {
-                if (!response.ok) {
-                  // If response is not OK, throw an error
-                  throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json(); // Parse JSON if the response is OK
-              })
-              .then((data) => {
-                alert(data.message);
-              })
-              .catch((error) => {
-                console.error("Error:", error); // This will catch errors like 404 or invalid JSON
-                alert("An error occurred: " + error.message);
-              });
-          });
-        } else {
-          alert("Geolocation is not supported by this browser.");
-        }
-      }
-    </script>
+    <link rel="stylesheet" href="{% static 'css/del-partner.css' %}" />
   </head>
   <body>
-    <h1>Welcome, {{ user.name }}</h1>
+    <div class="navbar">
+      <h1>Delivery Partner Dashboard</h1>
+      <a href="{% url 'logout_view' %}">Logout</a>
+    </div>
 
-    <h2>Set Your Current Location:</h2>
-    <button onclick="updateLocation()">Add/Update Location</button>
+    <div id="last-address" class="last-address"></div>
 
-    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}" />
+    <input type="hidden" id="partner-id" value="{{ request.user.id }}" />
+    <div id="location-status" class="location-status"></div>
+    <button id="update-location-btn">Update My Location</button>
 
-    <h3>Your Assigned Orders:</h3>
-    <ul>
-      {% for order in orders %}
-      <li>
-        {{ order.food_items.all.0.restaurant.restaurant_name }} - {{
-        order.status }}
-      </li>
-      {% empty %}
-      <li>No orders assigned yet.</li>
-      {% endfor %}
-    </ul>
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+      import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-analytics.js";
+      import {
+        getDatabase,
+        ref,
+        onValue,
+        remove,
+      } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
+
+      // Your web app's Firebase configuration
+      const firebaseConfig = {
+        apiKey: "{{ firebase_config.apiKey }}",
+        authDomain: "{{ firebase_config.authDomain }}",
+        databaseURL: "{{ firebase_config.databaseURL }}",
+        projectId: "{{ firebase_config.projectId }}",
+        storageBucket: "{{ firebase_config.storageBucket }}",
+        messagingSenderId: "{{ firebase_config.messagingSenderId }}",
+        appId: "{{ firebase_config.appId }}",
+        measurementId: "{{ firebase_config.measurementId }}",
+      };
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const analytics = getAnalytics(app);
+      const database = getDatabase(app);
+      console.log("Firebase initialized", app);
+
+      // Initialize a set to track shown notifications
+      const shownNotifications = new Set();
+
+      // Function to get CSRF token
+      function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+          const cookies = document.cookie.split(";");
+          for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === name + "=") {
+              cookieValue = decodeURIComponent(
+                cookie.substring(name.length + 1)
+              );
+              break;
+            }
+          }
+        }
+        return cookieValue;
+      }
+
+      // Function to update location status display
+      function updateLocationStatus(message, isError = false) {
+        const statusDiv = document.getElementById("location-status");
+        statusDiv.textContent = message;
+        statusDiv.className = `location-status ${
+          isError ? "error" : "success"
+        }`;
+      }
+
+      // Function to update location
+      // Function to update location
+      async function updateLocation() {
+        if (!navigator.geolocation) {
+          updateLocationStatus(
+            "Geolocation is not supported by your browser",
+            true
+          );
+          return;
+        }
+
+        try {
+          const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject);
+          });
+
+          const response = await fetch("/update_location/", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": getCookie("csrftoken"),
+            },
+            body: JSON.stringify({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            updateLocationStatus("Location updated successfully!");
+          } else {
+            updateLocationStatus(
+              data.error || "Failed to update location",
+              true
+            );
+          }
+        } catch (error) {
+          updateLocationStatus(
+            "Error getting location: " + error.message,
+            true
+          );
+        }
+      }
+
+      // Expose updateLocation to the global scope
+      window.updateLocation = updateLocation;
+
+      // Function to start sending location to the backend every 5 seconds after an order is assigned
+      function startSendingLocationToBackend(partnerId) {
+        if (navigator.geolocation) {
+          setInterval(async () => {
+            navigator.geolocation.getCurrentPosition(async (position) => {
+              const latitude = position.coords.latitude;
+              const longitude = position.coords.longitude;
+
+              console.log(
+                "Sending periodic location to backend:",
+                latitude,
+                longitude
+              );
+
+              // Send location to backend (Django) which will update Firebase
+              await sendLocationToBackend(latitude, longitude);
+            });
+          }, 5000); // Send location every 5 seconds
+        } else {
+          console.error("Geolocation is not supported by this browser.");
+        }
+      }
+
+      // Function to send location to backend
+      async function sendLocationToBackend(latitude, longitude) {
+        try {
+          const partnerId = document.getElementById("partner-id").value; // Get partner ID if needed
+          console.log("Sending to backend:", {
+            latitude: latitude,
+            longitude: longitude,
+          });
+
+          const response = await fetch("/location-update/", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": getCookie("csrftoken"),
+            },
+            body: JSON.stringify({
+              latitude: latitude,
+              longitude: longitude,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            console.log("Location updated successfully in backend!");
+          } else {
+            console.error("Failed to update location in backend:", data.error);
+          }
+        } catch (error) {
+          console.error("Error sending location to backend:", error);
+        }
+      }
+
+      // Listen for order assignments
+
+      function listenForOrder(partnerId) {
+        const orderRef = ref(database, `orders/${partnerId}`);
+        onValue(
+          orderRef,
+          (snapshot) => {
+            const order = snapshot.val();
+            if (order) {
+              displayOrder(order); // Ensure this function updates the UI appropriately
+              startSendingLocationToBackend(partnerId); // Start sending location updates when the order is received
+            } else {
+              console.log(`No order found for partner ID: ${partnerId}`);
+            }
+          },
+          (error) => {
+            console.error("Error listening for order:", error);
+          }
+        );
+      }
+
+      // Display the assigned order on the page
+      function displayOrder(order) {
+        console.log("Displaying order: ", order); // Log the order to debug
+        const orderDiv = document.getElementById("last-address");
+        orderDiv.innerHTML = `
+    <h3>New Order</h3>
+    <p>Delivery Address: ${order.delivery_address.address}</p>
+  `;
+      }
+
+      // Clear order when the partner logs out
+      function clearOrder(partnerId) {
+        const orderRef = ref(database, `orders/${partnerId}`);
+        remove(orderRef);
+      }
+
+      // Initialize when the page loads
+      window.onload = function () {
+        const partnerId = document.getElementById("partner-id").value;
+        console.log("Partner ID: ", partnerId);
+        listenForOrder(partnerId);
+        updateLocation(); // Get initial location when page loads
+
+        document
+          .getElementById("update-location-btn")
+          .addEventListener("click", updateLocation);
+
+        const logoutButton = document.querySelector(
+          'a[href="{% url "logout_view" %}"]'
+        );
+        logoutButton.addEventListener("click", () => {
+          clearOrder(partnerId); // Remove the order when logging out
+        });
+      };
+    </script>
   </body>
 </html>

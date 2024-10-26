@@ -112,6 +112,8 @@ class Order(models.Model):
         ('preparing', 'Preparing'),
         ('ontheway', 'On the Way'),
         ('delivered', 'Delivered'),
+        ('awaiting_confirmation', 'Awaiting Confirmation'),  # New status
+        ('no_delivery_partner', 'No Delivery Partner Found'),  # New status
     ]
     PAYMENT_STATUS_CHOICES = [
         ('PAID', 'Paid'),  # After checkout, this will always be set to 'PAID'
@@ -121,7 +123,7 @@ class Order(models.Model):
     delivery_partner = models.ForeignKey(CustomUser, null=True, blank=True, related_name='delivery_orders', on_delete=models.SET_NULL)
     food_items = models.ManyToManyField(Food, through='OrderItem')
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=120, choices=STATUS_CHOICES, default='pending')
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='PAID')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

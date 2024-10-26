@@ -49,47 +49,49 @@ urlpatterns = [
 
     path('cart/clear/', clear_cart, name='clear_cart'),
 
-
     path('checkout/', checkout, name='checkout'),
 
     path('order-confirmation/<int:order_id>/', order_confirmation, name='order_confirmation'),
 
-    path('delivery-dashboard/', deliverypartner_dashboard, name='deliverypartner_dashboard'),  # Add this line
+    path('order-cancellation/', order_cancellation, name='order_cancellation'),
+
+    path('delivery-dashboard/', deliverypartner_dashboard, name='deliverypartner_dashboard'), 
+     
+    path('get_delivery_partner_location/<int:order_id>/', get_delivery_partner_location, name='get_delivery_partner_location'),
+ # Add this line
+
+    # path('update_location/', update_location, name='update_location'),
 
     path('update_location/', update_location, name='update_location'),
 
+    path('location-update/', update_location_view, name='update_location'),
+
+    path('delivery_map/<int:order_id>/<int:partner_id>/', delivery_map, name='delivery_map'),
+
     path('assign-delivery-partner/<int:order_id>/', assign_closest_delivery_partner, name='assign_delivery_partner'),  # Endpoint for assigning closest delivery partner to an order
 
-
     path('add_food/', add_food_item, name='add_food_item'),
-    # path('restaurant/location/',restaurant_location, name='restaurant_location'),
-    path('owner/logout',owner_logout_page,name='owner_logout_page'),
 
     path('save-location/', save_customer_location_to_session, name='save_location_to_session'),
 
     path('home/location/',location, name='location'),
 
-    path('customer-login/', customer_login_page, name='customer_login_page'),
-
     path('customer-register/', customer_register_page, name='customer_register_page'),
-
-    path('owner-login/', owner_login_page, name='owner_login_page'),
 
     path('owner-register/', owner_register_page, name='owner_register_page'),
     
     path('restaurant-register/', register_restaurant, name='register_restaurant'),
 
-    path('delivery-login/', deliverypartner_login_page, name='deliverypartner_login_page'),
-
     path('delivery-register/', deliverypartner_register_page, name='deliverypartner_register_page'),
+    
+    path('login/', login_page, name='login_page'),
 
     path('logout/', logout_page, name='logout_page'),
 
+    path('log-out/', logout_view, name='logout_view'),
+
     path('admin/', admin.site.urls),
 ]
-
-
-
 
 
 

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Track Delivery Partner</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+      #map {
+        height: 400px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Delivery Partner Location</h1>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+      import {
+        getDatabase,
+        ref,
+        onValue,
+      } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
+
+      // Your Firebase configuration
+      const firebaseConfig = {
+        apiKey: "{{ firebase_config.apiKey }}",
+        authDomain: "{{ firebase_config.authDomain }}",
+        databaseURL: "{{ firebase_config.databaseURL }}",
+        projectId: "{{ firebase_config.projectId }}",
+        storageBucket: "{{ firebase_config.storageBucket }}",
+        messagingSenderId: "{{ firebase_config.messagingSenderId }}",
+        appId: "{{ firebase_config.appId }}",
+        measurementId: "{{ firebase_config.measurementId }}",
+      };
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const database = getDatabase(app);
+
+      // Initialize the map
+      const map = L.map("map").setView([0, 0], 13); // Set initial view to coordinates 0,0
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+      }).addTo(map);
+
+      let deliveryPartnerMarker, customerMarker, restaurantMarker;
+
+      // Function to add customer and restaurant markers
+      function addCustomerAndRestaurantMarkers(
+        customerLat,
+        customerLng,
+        restaurantLat,
+        restaurantLng
+      ) {
+        // Add Customer marker
+        if (customerLat && customerLng) {
+          customerMarker = L.marker([customerLat, customerLng], {
+            title: "Customer Location",
+            icon: L.icon({
+              iconUrl: "https://img.icons8.com/color/48/000000/person-male.png",
+              iconSize: [38, 38],
+            }),
+          })
+            .addTo(map)
+            .bindPopup("Customer Location");
+        }
+
+        // Add Restaurant marker
+        if (restaurantLat && restaurantLng) {
+          restaurantMarker = L.marker([restaurantLat, restaurantLng], {
+            title: "Restaurant Location",
+            icon: L.icon({
+              iconUrl: "https://img.icons8.com/color/48/000000/restaurant.png",
+              iconSize: [38, 38],
+            }),
+          })
+            .addTo(map)
+            .bindPopup("Restaurant Location");
+        }
+      }
+
+      // Function to update the delivery partner's location
+      function updateDeliveryPartnerLocation(partnerId) {
+        const locationRef = ref(database, `locations/${partnerId}`);
+
+        onValue(
+          locationRef,
+          (snapshot) => {
+            const locationData = snapshot.val();
+
+            if (locationData) {
+              const { latitude, longitude } = locationData;
+              console.log("Updating marker position:", latitude, longitude);
+
+              // If the marker doesn't exist, create it
+              if (!deliveryPartnerMarker) {
+                deliveryPartnerMarker = L.marker([latitude, longitude], {
+                  title: "Delivery Partner Location",
+                  icon: L.icon({
+                    iconUrl:
+                      "https://img.icons8.com/fluency/48/000000/delivery.png",
+                    iconSize: [38, 38],
+                  }),
+                }).addTo(map);
+              } else {
+                // Update the marker's position
+                deliveryPartnerMarker.setLatLng([latitude, longitude]);
+              }
+
+              // Set the map view to the new position
+              map.setView([latitude, longitude], 13);
+            }
+          },
+          (error) => {
+            console.error("Error fetching location data:", error);
+          }
+        );
+      }
+
+      // Get the partner ID from a hidden input or variable
+      const partnerId = "{{ partner_id }}"; // Replace with actual partner ID
+      const customerLat = "{{ customer_lat }}"; // Replace with actual customer latitude
+      const customerLng = "{{ customer_lng }}"; // Replace with actual customer longitude
+      const restaurantLat = "{{ restaurant_lat }}"; // Replace with actual restaurant latitude
+      const restaurantLng = "{{ restaurant_lng }}"; // Replace with actual restaurant longitude
+
+      // Add customer and restaurant markers
+      addCustomerAndRestaurantMarkers(
+        customerLat,
+        customerLng,
+        restaurantLat,
+        restaurantLng
+      );
+
+      // Start listening for delivery partner updates
+      updateDeliveryPartnerLocation(partnerId);
+    </script>
+  </body>
+</html>
