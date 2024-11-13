@@ -315,8 +315,6 @@ def search_restaurant(request):
 
 
 
-
-
 @login_required
 def manage_inventory(request):
     # Get the logged-in user (owner)
@@ -474,11 +472,10 @@ def update_location(request):
 def update_location_view(request):
     if request.method == 'POST':
         try:
-            # Parse JSON data
             data = json.loads(request.body)
             latitude = data.get('latitude')
             longitude = data.get('longitude')
-            partner_id = request.user.id  # Assuming the user is authenticated and is a delivery partner
+            partner_id = request.user.id  
 
             if latitude and longitude:
                 # Send the location to Firebase
@@ -498,10 +495,8 @@ def update_location_view(request):
 def get_delivery_partner_location(request, order_id):
     if request.user.is_authenticated:
         try:
-            # Get the order with the given order_id
             order = Order.objects.get(id=order_id, customer=request.user)
             if order.delivery_partner:
-                # Get the location of the assigned delivery partner
                 location = DeliveryPartnerLocation.objects.get(user=order.delivery_partner)
                 return JsonResponse({
                     'latitude': location.latitude,
