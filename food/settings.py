@@ -74,6 +74,7 @@ INSTALLED_APPS = [
 EXTERNAL_APPS = [ 'home',
                  'accounts'
                  ]
+                 
 INSTALLED_APPS += EXTERNAL_APPS
 
 
@@ -116,25 +117,6 @@ WSGI_APPLICATION = 'food.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
-
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'postgres',       # Database name
-#         'USER': 'postgres.ispriplgvqmhodhundda',       # Database username
-#         'PASSWORD': 'e4e5Nf3Nc6@',        # Database password
-#         'HOST': 'aws-0-ap-southeast-1.pooler.supabase.com',            # Supabase PostgreSQL host (like db.xxxxx.supabase.co)
-#         'PORT': '6543',                     # PostgreSQL port (usually 5432)
-#     }
-# }
 
 
 
